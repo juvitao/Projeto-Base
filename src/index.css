@@ -1,0 +1,273 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Clean Light Theme - Professional Finance Dashboard */
+    --background: 0 0% 98%;
+    --foreground: 240 10% 3.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+
+    /* Strong Red - MATCHING AUTOMATIONS (Red-600) */
+    --primary: 0 72% 51%;
+    /* Pure Vivid Red */
+    --primary-foreground: 0 0% 100%;
+
+    /* Subtle gray for secondary elements */
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+
+    /* Muted grays for less important content */
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+
+    /* Accent matches primary for consistency */
+    --accent: 0 72% 51%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    /* Very soft borders in light mode - almost invisible */
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 0 72% 51%;
+
+    --radius: 0.2rem;
+
+    /* Sidebar light theme - White background, Red accents */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 240 5.9% 10%;
+    --sidebar-primary: 0 72% 51%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 72% 98%;
+    /* Very light warm red background */
+    --sidebar-accent-foreground: 0 72% 45%;
+    /* Darker red for text */
+    --sidebar-border: 220 13% 92%;
+    --sidebar-ring: 0 72% 51%;
+
+    /* Semantic colors for financial data */
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    --success-light: 142 76% 96%;
+
+    /* Cost/Spend aligns with brand color now */
+    --cost: 356 100% 52%;
+    --cost-foreground: 0 0% 100%;
+    --cost-light: 356 100% 97%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --warning-light: 48 100% 96%;
+
+    /* Subtle shadows */
+    --shadow-card: none;
+  }
+
+  .dark {
+    /* Enhanced Dark Theme - Red + Black contrast */
+    --background: 20 14% 4%;
+    --foreground: 0 0% 98%;
+
+    --card: 20 14% 8%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 20 14% 8%;
+    --popover-foreground: 0 0% 98%;
+
+    /* Slightly brighter vivid red for dark mode */
+    --primary: 356 100% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+
+    --accent: 356 100% 60%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    /* Softer borders in dark mode */
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 356 100% 60%;
+
+    --radius: 0.15rem;
+
+    /* Sidebar dark theme */
+    --sidebar-background: 20 14% 6%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 356 100% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 356 100% 15%;
+    --sidebar-accent-foreground: 356 100% 60%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 356 100% 60%;
+
+    /* Semantic colors adjusted for dark */
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    --success-light: 142 76% 20%;
+
+    --cost: 356 100% 60%;
+    --cost-foreground: 0 0% 100%;
+    --cost-light: 356 100% 15%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --warning-light: 48 100% 20%;
+
+    /* Deeper shadows for dark mode */
+    --shadow-card: none;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+  }
+
+  html {
+    max-width: 100vw;
+    overflow-x: hidden;
+    position: relative;
+    /* iOS Safe Area Support */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    overflow-x: hidden;
+    max-width: 100vw;
+    position: relative;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter Tight', sans-serif;
+    font-weight: 400;
+    /* Ensure content respects safe areas on iOS */
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-weight: 700;
+  }
+
+  .font-light {
+    font-weight: 300;
+  }
+
+  .font-bold {
+    font-weight: 700;
+  }
+
+  .font-extrabold {
+    font-weight: 800;
+  }
+
+  #root {
+    overflow-x: hidden;
+    max-width: 100vw;
+    position: relative;
+    width: 100%;
+  }
+}
+
+@layer components {
+
+  /* Light mode - ultra soft borders and shadows */
+  :root .border {
+    @apply border-border/40;
+  }
+
+  :root [class*="Card"] {
+    @apply border-border/30 shadow-none;
+  }
+
+  :root table {
+    @apply border-border/20;
+  }
+
+  :root [class*="Table"] {
+    @apply border-border/20;
+  }
+
+  :root input,
+  :root textarea,
+  :root select {
+    @apply border-border/50;
+  }
+
+  :root [class*="Popover"],
+  :root [class*="Dialog"],
+  :root [class*="Dropdown"] {
+    @apply border-border/40 shadow-none;
+  }
+
+  /* Dark mode - keep existing soft borders */
+  .dark [data-radix-collection-item] {
+    @apply border-border/50;
+  }
+
+  .dark table {
+    @apply border-border/30;
+  }
+
+  .dark .stroke-muted {
+    @apply stroke-border/60;
+  }
+
+  .dark [class*="Card"] {
+    @apply border-border/40;
+  }
+
+  /* Glass Premium Utility - Tinted with Red */
+  .glass-panel {
+    @apply bg-white/80 dark:bg-black/60 backdrop-blur-md border border-primary/20 shadow-none;
+  }
+}
+
+@layer utilities {
+
+  /* Smooth collapsible content animation */
+  [data-state="open"]>div {
+    animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+  }
+
+  /* Explosion Gradient: Red to Orange */
+  .bg-meta-gradient {
+    background: hsl(var(--primary));
+  }
+
+  .text-meta-gradient {
+    color: hsl(var(--primary));
+    background: none;
+    -webkit-background-clip: unset;
+    -webkit-text-fill-color: unset;
+    background-clip: unset;
+  }
+}

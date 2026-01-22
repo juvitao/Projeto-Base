@@ -1,0 +1,37 @@
+
+- [x] **Estado Inicial (Minimizado)**
+    - [x] Set defaultExpanded={false} for 'All' filter in Products.tsx
+- [x] **Gestão de Equipe: Separação de Funções e Níveis de Acesso**
+    - [x] **DB Setup**: Criado `agency_access_levels` e `member_access_levels`.
+    - [x] Criado hook `useAccessLevels` para gestão de permissões.
+    - [x] Refatorado `useAgencyRoles` para focar em Funções de Trabalho (Competências).
+    - [x] Criado `CreateAccessLevelModal` com matriz de permissões.
+    - [x] Refatorado `CreateRoleModal` para gestão simplificada de Funções.
+    - [x] Atualizado `TeamConnections`:
+        - [x] UI com dois botões distintos: "Criar Função" e "Níveis de Acesso".
+        - [x] Seções de visualização separadas para Funções e Níveis.
+    - [x] Atualizado `EditMemberModal`:
+        - [x] Seleção independente de Níveis de Acesso e Funções de Trabalho.
+    - [x] Corrigido erros de lint e fechamento de tags JSX.
+- [x] **Configuração Supabase (SQL)**
+    - [x] Executar script SQL no Dashboard (Tables + RLS).
+- [x] **Configuração Supabase (CLI)**
+    - [x] Instalar Supabase CLI (local).
+    - [x] Executar `npx supabase login`.
+    - [x] Executar `npx supabase link`.
+    - [x] Executar `npx supabase functions deploy invite-team-member`.
+- [x] **Fluxo de Aceitar Convite**
+    - [x] Criar página `AcceptInvite.tsx`.
+    - [x] Adicionar rota `/auth/accept-invite` ao `App.tsx`.
+    - [x] Interceptar tokens de convite no `DeepLinkHandler`.
+    - [x] Atualizar status do membro para 'active' após definir senha.
+- [x] **Sincronização de Status de Membros**
+    - [x] Atualizar Edge Function para detectar usuários existentes.
+    - [x] Atualizar `AcceptInvite.tsx` para redundância.
+    - [x] Criar script SQL para trigger e correção retroativa.
+- [x] **Aprimoramento de Gestão de Equipe e Arquivamento**
+    - [x] Botão de excluir em itens arquivados.
+    - [x] Novo sistema de Roles com matriz de permissões.
+    - [x] Botão dedicado "Níveis de Acesso" na Equipe.
+    - [x] Edição de Roles e Atribuição a funcionários.
+- [x] **Testar fluxo completo.**
