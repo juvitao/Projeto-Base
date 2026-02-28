@@ -6,8 +6,7 @@ import { Mail, Lock, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { sendVerificationEmail } from "@/lib/mailService";
-import leverLogo from "@/assets/lever-logo.png";
+import { VoraLogo } from "@/components/VoraLogo";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -41,15 +40,7 @@ const Login = () => {
         });
         if (error) throw error;
 
-        // Send verification email via Loops.so
-        try {
-          const emailSent = await sendVerificationEmail(email);
-          if (!emailSent) {
-            console.warn('[Login] Loops.so verification email failed, but Supabase email should still work.');
-          }
-        } catch (emailError) {
-          console.error('[Login] Error sending Loops.so verification email:', emailError);
-        }
+
 
         toast({
           title: "Conta criada!",
@@ -78,13 +69,10 @@ const Login = () => {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-4 bg-background">
-      <div className="w-full max-w-md space-y-8">
+      <div className="w-full max-w-md space-y-12">
         {/* Logo + Branding */}
-        <div className="text-left space-y-4 mb-6">
-          <div className="flex items-center gap-2">
-            <img src={leverLogo} alt="Lever" className="h-10 w-auto" />
-            <h1 className="text-3xl font-extrabold text-foreground">Digital</h1>
-          </div>
+        <div className="flex flex-col items-center justify-center text-center space-y-4 mb-4">
+          <VoraLogo size="lg" className="scale-125 transition-transform hover:scale-130 duration-700" withText={true} />
         </div>
 
 

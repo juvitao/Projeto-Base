@@ -25,7 +25,7 @@ supabase login
 3. Link com seu projeto:
 ```bash
 cd "/Users/joaovithorbauer/Documents/Lever System"
-supabase link --project-ref pxhmzpwvxvlwngjbjkrg
+supabase link --project-ref riqisavigjeptqewzpxl
 ```
 
 4. Deploy todas as funções:
@@ -37,7 +37,7 @@ supabase functions deploy
 
 Se preferir não usar CLI:
 
-1. Vá para [Supabase Dashboard](https://supabase.com/dashboard/project/pxhmzpwvxvlwngjbjkrg/functions)
+1. Vá para [Supabase Dashboard](https://supabase.com/dashboard/project/riqisavigjeptqewzpxl/functions)
 2. Clique em **"New Function"**
 3. Crie cada função manualmente copiando o código de:
    - `supabase/functions/sync-meta-campaigns/index.ts`
@@ -190,7 +190,7 @@ Se alguma função não aparecer, ela não foi deployada.
 
 ## URLs Importantes
 
-- **Supabase Dashboard**: https://supabase.com/dashboard/project/pxhmzpwvxvlwngjbjkrg
+- **Supabase Dashboard**: https://supabase.com/dashboard/project/riqisavigjeptqewzpxl
 - **Facebook App**: https://developers.facebook.com/apps/860109229817662/
 - **App URL**: https://app.leverag.digital
 - **Localhost**: http://localhost:8080

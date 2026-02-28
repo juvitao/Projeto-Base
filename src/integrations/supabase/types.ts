@@ -236,6 +236,405 @@ export interface Database {
         }
         Relationships: []
       }
+      vora_clients: {
+        Row: {
+          id: string
+          name: string
+          email: string | null
+          phone: string
+          address: string | null
+          gender: string | null
+          status: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          email?: string | null
+          phone: string
+          address?: string | null
+          gender?: string | null
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          email?: string | null
+          phone?: string
+          address?: string | null
+          gender?: string | null
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      vora_products: {
+        Row: {
+          id: string
+          sku: string | null
+          name: string
+          description: string | null
+          stock_quantity: number
+          unit_price: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          sku?: string | null
+          name: string
+          description?: string | null
+          stock_quantity?: number
+          unit_price: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          sku?: string | null
+          name?: string
+          description?: string | null
+          stock_quantity?: number
+          unit_price?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      vora_brands: {
+        Row: {
+          id: string
+          name: string
+          color: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          color?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          color?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      vora_catalog_products: {
+        Row: {
+          id: string
+          brand_id: string
+          name: string
+          category: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          brand_id: string
+          name: string
+          category?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          brand_id?: string
+          name?: string
+          category?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vora_catalog_products_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "vora_brands"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      vora_inventory: {
+        Row: {
+          id: string
+          user_id: string
+          catalog_product_id: string
+          quantity: number
+          cost_price: number
+          sale_price: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          catalog_product_id: string
+          quantity?: number
+          cost_price?: number
+          sale_price?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          catalog_product_id?: string
+          quantity?: number
+          cost_price?: number
+          sale_price?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vora_inventory_catalog_product_id_fkey"
+            columns: ["catalog_product_id"]
+            isOneToOne: false
+            referencedRelation: "vora_catalog_products"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      vora_sales: {
+        Row: {
+          id: string
+          display_id: number
+          user_id: string | null
+          client_id: string | null
+          sale_date: string
+          payment_method: string
+          total_amount: number
+          installments: number
+          first_installment_date: string | null
+          discount: number
+          paid: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          display_id?: number
+          user_id?: string | null
+          client_id?: string | null
+          sale_date?: string
+          payment_method?: string
+          total_amount?: number
+          installments?: number
+          first_installment_date?: string | null
+          discount?: number
+          paid?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          display_id?: number
+          user_id?: string | null
+          client_id?: string | null
+          sale_date?: string
+          payment_method?: string
+          total_amount?: number
+          installments?: number
+          first_installment_date?: string | null
+          discount?: number
+          paid?: boolean
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vora_sales_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "vora_clients"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      vora_sale_items: {
+        Row: {
+          id: string
+          sale_id: string | null
+          product_id: string | null
+          name: string
+          quantity: number
+          unit_price: number
+          needs_ordering: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          sale_id?: string | null
+          product_id?: string | null
+          name: string
+          quantity: number
+          unit_price: number
+          needs_ordering?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          sale_id?: string | null
+          product_id?: string | null
+          name?: string
+          quantity?: number
+          unit_price?: number
+          needs_ordering?: boolean
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vora_sale_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "vora_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vora_sale_items_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "vora_sales"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      vora_payments: {
+        Row: {
+          id: string
+          client_id: string | null
+          sale_id: string | null
+          payment_date: string
+          amount: number
+          method: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          client_id?: string | null
+          sale_id?: string | null
+          payment_date?: string
+          amount: number
+          method?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          client_id?: string | null
+          sale_id?: string | null
+          payment_date?: string
+          amount?: number
+          method?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vora_payments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "vora_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vora_payments_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "vora_sales"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      vora_financial_entries: {
+        Row: {
+          id: string
+          user_id: string
+          type: string
+          category: string
+          description: string | null
+          amount: number
+          payment_method: string | null
+          card_fee_percent: number
+          net_amount: number | null
+          entry_date: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          type: string
+          category: string
+          description?: string | null
+          amount: number
+          payment_method?: string | null
+          card_fee_percent?: number
+          net_amount?: number | null
+          entry_date?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          type?: string
+          category?: string
+          description?: string | null
+          amount?: number
+          payment_method?: string | null
+          card_fee_percent?: number
+          net_amount?: number | null
+          entry_date?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      vora_receivables: {
+        Row: {
+          id: string
+          user_id: string
+          client_name: string
+          products: string | null
+          amount_due: number
+          amount_paid: number
+          due_date: string
+          status: string
+          notes: string | null
+          sale_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          client_name: string
+          products?: string | null
+          sale_id?: string | null
+          amount_due: number
+          amount_paid?: number
+          due_date: string
+          status?: string
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          client_name?: string
+          products?: string | null
+          amount_due?: number
+          amount_paid?: number
+          due_date?: string
+          status?: string
+          notes?: string | null
+          sale_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -259,6 +658,21 @@ export interface Database {
           created_at: string
           updated_at: string
         }[]
+      }
+      create_sale_with_receivables: {
+        Args: {
+          p_user_id: string
+          p_client_id: string
+          p_sale_date: string
+          p_payment_method: string
+          p_discount: number
+          p_total_amount: number
+          p_installments: number
+          p_first_installment_date: string
+          p_items: any
+          p_receivables: any
+        }
+        Returns: string
       }
     }
     Enums: {

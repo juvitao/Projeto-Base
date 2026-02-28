@@ -16,7 +16,7 @@ supabase login
 
 3. Link com seu projeto (substitua pelo ID do seu projeto):
 ```bash
-supabase link --project-ref pxhmzpwvxvlwngjbjkrg
+supabase link --project-ref riqisavigjeptqewzpxl
 ```
 
 ## Deploy das Edge Functions
@@ -63,7 +63,7 @@ VITE_APP_URL=https://app.leverag.digital
 
 ### Variáveis do Supabase (já devem existir automaticamente):
 ```
-SUPABASE_URL=https://pxhmzpwvxvlwngjbjkrg.supabase.co
+SUPABASE_URL=https://riqisavigjeptqewzpxl.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=[sua-service-role-key]
 ```
 
@@ -113,7 +113,7 @@ Vá para Shopify Partners > Seu App:
 
 2. **Allowed redirection URL(s)**:
    ```
-   https://pxhmzpwvxvlwngjbjkrg.supabase.co/functions/v1/shopify-oauth-callback
+   https://riqisavigjeptqewzpxl.supabase.co/functions/v1/shopify-oauth-callback
    ```
 
 ## Testar as Funções
@@ -122,7 +122,7 @@ Após o deploy, você pode testar cada função:
 
 ### Testar sync-meta-campaigns:
 ```bash
-curl -X POST https://pxhmzpwvxvlwngjbjkrg.supabase.co/functions/v1/sync-meta-campaigns \
+curl -X POST https://riqisavigjeptqewzpxl.supabase.co/functions/v1/sync-meta-campaigns \
   -H "Authorization: Bearer YOUR_ANON_KEY" \
   -H "Content-Type: application/json" \
   -d '{"force": true}'
@@ -130,7 +130,7 @@ curl -X POST https://pxhmzpwvxvlwngjbjkrg.supabase.co/functions/v1/sync-meta-cam
 
 ### Testar shopify-auth-start (no navegador):
 ```
-https://pxhmzpwvxvlwngjbjkrg.supabase.co/functions/v1/shopify-auth-start?shop=loja.myshopify.com&clientId=uuid-do-cliente&returnUrl=https://app.leverag.digital
+https://riqisavigjeptqewzpxl.supabase.co/functions/v1/shopify-auth-start?shop=loja.myshopify.com&clientId=uuid-do-cliente&returnUrl=https://app.leverag.digital
 ```
 
 ## Executar Migration SQL

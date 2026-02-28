@@ -19,7 +19,7 @@ echo ""
 
 # Link com o projeto (se ainda não estiver linkado)
 echo "🔗 Linkando com o projeto Supabase..."
-supabase link --project-ref pxhmzpwvxvlwngjbjkrg
+supabase link --project-ref riqisavigjeptqewzpxl
 
 echo ""
 echo "📤 Fazendo deploy de todas as funções..."
