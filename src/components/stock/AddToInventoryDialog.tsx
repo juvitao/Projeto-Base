@@ -17,27 +17,27 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Loader2, Plus, Search } from "lucide-react";
-import { useBrands, useCatalogProducts } from "@/hooks/useInventory";
+import { useBrands, useMasterProducts } from "@/hooks/useInventory";
 import { useToast } from "@/hooks/use-toast";
 import { formatBRL } from "@/lib/financial-utils";
 import type { Database } from "@/integrations/supabase/types";
 
-type CatalogProduct = Database["public"]["Tables"]["vora_catalog_products"]["Row"];
+type MasterProduct = Database["public"]["Tables"]["master_products"]["Row"];
 
 interface Props {
     open: boolean;
     onClose: () => void;
-    onSave: (catalogProductId: string, quantity: number, costPrice: number, salePrice: number) => Promise<void>;
+    onSave: (masterProductId: string, quantity: number, costPrice: number, salePrice: number) => Promise<void>;
 }
 
 export function AddToInventoryDialog({ open, onClose, onSave }: Props) {
     const { toast } = useToast();
     const { brands } = useBrands();
     const [selectedBrandId, setSelectedBrandId] = useState("");
-    const { products, isLoading: catalogLoading, searchCatalog, createProduct } = useCatalogProducts(selectedBrandId);
+    const { products, isLoading: catalogLoading, searchCatalog, createProduct } = useMasterProducts(selectedBrandId);
 
     const [productQuery, setProductQuery] = useState("");
-    const [selectedProduct, setSelectedProduct] = useState<CatalogProduct | null>(null);
+    const [selectedProduct, setSelectedProduct] = useState<MasterProduct | null>(null);
     const [showDropdown, setShowDropdown] = useState(false);
 
     const [quantity, setQuantity] = useState("1");

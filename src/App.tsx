@@ -56,6 +56,7 @@ import Financial from "./pages/Financial";
 import Sales from "./pages/Sales";
 import Whatsapp from "./pages/Whatsapp";
 import SettingsPage from "./pages/Settings";
+import Catalog from "./pages/Catalog";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
@@ -132,6 +133,17 @@ const App = () => (
                     <ProtectedRoute>
                       <DashboardLayout>
                         <Sales />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/catalog"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardLayout>
+                        <Catalog />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

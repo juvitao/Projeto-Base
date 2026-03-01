@@ -64,9 +64,9 @@ const Stock = () => {
 
     const filtered = inventory.filter((item) => {
         const matchesSearch = !searchQuery ||
-            item.catalog_product?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            item.catalog_product?.brand?.name.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesBrand = brandFilter === "all" || item.catalog_product?.brand?.id === brandFilter;
+            item.master_product?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            item.master_product?.brand?.name.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesBrand = brandFilter === "all" || item.master_product?.brand?.id === brandFilter;
         return matchesSearch && matchesBrand;
     });
 
@@ -163,8 +163,8 @@ const Stock = () => {
                     </div>
                 ) : (
                     filtered.map((item) => {
-                        const brand = item.catalog_product?.brand;
-                        const product = item.catalog_product;
+                        const brand = item.master_product?.brand;
+                        const product = item.master_product;
                         return (
                             <Card key={item.id} className="overflow-hidden group hover:border-primary/50 transition-all">
                                 <div className="p-4 pb-2">
@@ -238,7 +238,7 @@ const Stock = () => {
                         <DialogTitle>Editar Estoque</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-2">
-                        <p className="text-sm font-medium">{editItem?.catalog_product?.name}</p>
+                        <p className="text-sm font-medium">{editItem?.master_product?.name}</p>
                         <div className="grid grid-cols-3 gap-3">
                             <div className="space-y-1">
                                 <Label className="text-xs">Quantidade</Label>

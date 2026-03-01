@@ -122,7 +122,7 @@ export function SaleFormSheet({ open, onClose, onSave }: Props) {
 
     // Filtered inventory for product search
     const filteredInventory = productQuery.length >= 2
-        ? availableInventory.filter(i => i.catalog_product?.name.toLowerCase().includes(productQuery.toLowerCase()))
+        ? availableInventory.filter(i => i.master_product?.name.toLowerCase().includes(productQuery.toLowerCase()))
         : [];
 
     // Totals
@@ -168,9 +168,9 @@ export function SaleFormSheet({ open, onClose, onSave }: Props) {
             ...prev,
             {
                 id: String(++itemIdCounter),
-                product_id: invItem?.catalog_product_id ?? null,
+                product_id: invItem?.master_product_id ?? null,
                 inventory_id: invItem?.id ?? null,
-                name: invItem?.catalog_product?.name ?? "",
+                name: invItem?.master_product?.name ?? "",
                 quantity: 1,
                 unit_price: invItem?.sale_price ?? 0,
                 max_qty: invItem?.quantity ?? 999,
@@ -352,9 +352,9 @@ export function SaleFormSheet({ open, onClose, onSave }: Props) {
                                                     onClick={() => addCartItem(inv)}
                                                 >
                                                     <div className="min-w-0">
-                                                        <span className="font-medium block truncate">{inv.catalog_product?.name}</span>
+                                                        <span className="font-medium block truncate">{inv.master_product?.name}</span>
                                                         <span className="text-[10px] text-muted-foreground">
-                                                            {inv.catalog_product?.brand?.name}
+                                                            {inv.master_product?.brand?.name}
                                                         </span>
                                                     </div>
                                                     <div className="text-right shrink-0">

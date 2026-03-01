@@ -4,12 +4,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import type { Database } from "@/integrations/supabase/types";
 
-type Brand = Database["public"]["Tables"]["vora_brands"]["Row"];
-type CatalogProduct = Database["public"]["Tables"]["vora_catalog_products"]["Row"];
+type Brand = Database["public"]["Tables"]["master_brands"]["Row"];
+type MasterProduct = Database["public"]["Tables"]["master_products"]["Row"];
 type InventoryItem = Database["public"]["Tables"]["vora_inventory"]["Row"];
 
 export interface InventoryWithProduct extends InventoryItem {
-    catalog_product?: CatalogProduct & { brand?: Brand };
+    master_product?: MasterProduct & { brand?: Brand };
 }
 
 // ─── Brands ───
@@ -19,7 +19,7 @@ export function useBrands() {
 
     useEffect(() => {
         (async () => {
-            const { data } = await supabase.from("vora_brands").select("*").order("name");
+            const { data } = await supabase.from("master_brands").select("*").order("name");
             setBrands(data ?? []);
             setIsLoading(false);
         })();
@@ -28,15 +28,15 @@ export function useBrands() {
     return { brands, isLoading };
 }
 
-// ─── Catalog Products ───
-export function useCatalogProducts(brandId?: string) {
-    const [products, setProducts] = useState<CatalogProduct[]>([]);
+// ─── Master Products ───
+export function useMasterProducts(brandId?: string) {
+    const [products, setProducts] = useState<MasterProduct[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
     const fetchByBrand = useCallback(async (bid: string) => {
         setIsLoading(true);
         const { data } = await supabase
-            .from("vora_catalog_products")
+            .from("master_products")
             .select("*")
             .eq("brand_id", bid)
             .order("name");
@@ -47,7 +47,7 @@ export function useCatalogProducts(brandId?: string) {
     const searchCatalog = useCallback(async (query: string) => {
         if (query.length < 2) { setProducts([]); return; }
         setIsLoading(true);
-        let q = supabase.from("vora_catalog_products").select("*").ilike("name", `%${query}%`).limit(20);
+        let q = supabase.from("master_products").select("*").ilike("name", `%${query}%`).limit(20);
         if (brandId) q = q.eq("brand_id", brandId);
         const { data } = await q;
         setProducts(data ?? []);
@@ -56,7 +56,7 @@ export function useCatalogProducts(brandId?: string) {
 
     const createProduct = async (brandId: string, name: string, category?: string) => {
         const { data, error } = await supabase
-            .from("vora_catalog_products")
+            .from("master_products")
             .insert({ brand_id: brandId, name, category: category || null })
             .select()
             .single();
@@ -93,20 +93,20 @@ export function useInventory() {
             const enriched: InventoryWithProduct[] = [];
             for (const item of invData ?? []) {
                 const { data: cp } = await supabase
-                    .from("vora_catalog_products")
+                    .from("master_products")
                     .select("*")
-                    .eq("id", item.catalog_product_id)
+                    .eq("id", item.master_product_id)
                     .single();
                 let brand: Brand | undefined;
                 if (cp) {
                     const { data: b } = await supabase
-                        .from("vora_brands")
+                        .from("master_brands")
                         .select("*")
                         .eq("id", cp.brand_id)
                         .single();
                     brand = b ?? undefined;
                 }
-                enriched.push({ ...item, catalog_product: cp ? { ...cp, brand } : undefined });
+                enriched.push({ ...item, master_product: cp ? { ...cp, brand } : undefined });
             }
             setInventory(enriched);
         } catch (err: any) {
@@ -118,11 +118,11 @@ export function useInventory() {
 
     useEffect(() => { fetchInventory(); }, [fetchInventory]);
 
-    const addToInventory = async (catalogProductId: string, quantity: number, costPrice: number, salePrice: number) => {
+    const addToInventory = async (masterProductId: string, quantity: number, costPrice: number, salePrice: number) => {
         if (!user) return;
         try {
             // Upsert: if already exists, increase quantity
-            const existing = inventory.find(i => i.catalog_product_id === catalogProductId);
+            const existing = inventory.find(i => i.master_product_id === masterProductId);
             if (existing) {
                 const { error } = await supabase
                     .from("vora_inventory")
@@ -137,7 +137,7 @@ export function useInventory() {
             } else {
                 const { error } = await supabase
                     .from("vora_inventory")
-                    .insert({ user_id: user.id, catalog_product_id: catalogProductId, quantity, cost_price: costPrice, sale_price: salePrice });
+                    .insert({ user_id: user.id, master_product_id: masterProductId, quantity, cost_price: costPrice, sale_price: salePrice });
                 if (error) throw error;
             }
             toast({ title: "Estoque atualizado!" });

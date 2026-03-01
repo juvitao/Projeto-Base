@@ -305,32 +305,42 @@ export interface Database {
         }
         Relationships: []
       }
-      vora_brands: {
+      master_brands: {
         Row: {
           id: string
           name: string
-          color: string
+          logo_url: string | null
+          is_custom: boolean
+          color: string | null
           created_at: string
         }
         Insert: {
           id?: string
           name: string
-          color?: string
+          logo_url?: string | null
+          is_custom?: boolean
+          color?: string | null
           created_at?: string
         }
         Update: {
           id?: string
           name?: string
-          color?: string
+          logo_url?: string | null
+          is_custom?: boolean
+          color?: string | null
           created_at?: string
         }
         Relationships: []
       }
-      vora_catalog_products: {
+      master_products: {
         Row: {
           id: string
           brand_id: string
           name: string
+          sku: string | null
+          suggested_price: number | null
+          image_url: string | null
+          is_custom: boolean
           category: string | null
           created_at: string
         }
@@ -338,6 +348,10 @@ export interface Database {
           id?: string
           brand_id: string
           name: string
+          sku?: string | null
+          suggested_price?: number | null
+          image_url?: string | null
+          is_custom?: boolean
           category?: string | null
           created_at?: string
         }
@@ -345,15 +359,19 @@ export interface Database {
           id?: string
           brand_id?: string
           name?: string
+          sku?: string | null
+          suggested_price?: number | null
+          image_url?: string | null
+          is_custom?: boolean
           category?: string | null
           created_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "vora_catalog_products_brand_id_fkey"
+            foreignKeyName: "master_products_brand_id_fkey"
             columns: ["brand_id"]
             isOneToOne: false
-            referencedRelation: "vora_brands"
+            referencedRelation: "master_brands"
             referencedColumns: ["id"]
           }
         ]
@@ -362,7 +380,7 @@ export interface Database {
         Row: {
           id: string
           user_id: string
-          catalog_product_id: string
+          master_product_id: string
           quantity: number
           cost_price: number
           sale_price: number
@@ -372,7 +390,7 @@ export interface Database {
         Insert: {
           id?: string
           user_id: string
-          catalog_product_id: string
+          master_product_id: string
           quantity?: number
           cost_price?: number
           sale_price?: number
@@ -382,7 +400,7 @@ export interface Database {
         Update: {
           id?: string
           user_id?: string
-          catalog_product_id?: string
+          master_product_id?: string
           quantity?: number
           cost_price?: number
           sale_price?: number
@@ -391,10 +409,10 @@ export interface Database {
         }
         Relationships: [
           {
-            foreignKeyName: "vora_inventory_catalog_product_id_fkey"
-            columns: ["catalog_product_id"]
+            foreignKeyName: "vora_inventory_master_product_id_fkey"
+            columns: ["master_product_id"]
             isOneToOne: false
-            referencedRelation: "vora_catalog_products"
+            referencedRelation: "master_products"
             referencedColumns: ["id"]
           }
         ]

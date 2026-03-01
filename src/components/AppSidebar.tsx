@@ -61,7 +61,8 @@ import {
   Phone,
   Edit,
   MoreVertical,
-  Check
+  Check,
+  Globe
 } from "lucide-react";
 
 // Theme Toggle Button Component
@@ -105,6 +106,7 @@ const mainMenuItems: MenuItem[] = [
   { title: "ESTOQUE", transKey: "ESTOQUE", url: "/stock", icon: Package },
   { title: "FINANCEIRO", transKey: "FINANCEIRO", url: "/financial", icon: CircleDollarSign },
   { title: "VENDAS", transKey: "VENDAS", url: "/sales", icon: ShoppingCart },
+  { title: "MASTER CATALOG", transKey: "MASTER_CATALOG", url: "/catalog", icon: Globe },
   { title: "WHATSAPP", transKey: "WHATSAPP", url: "/whatsapp", icon: MessageCircle },
 ];
 
