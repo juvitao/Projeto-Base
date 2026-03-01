@@ -98,9 +98,14 @@ export function getStatusInfo(status: string) {
 }
 
 /**
- * Formata uma data ISO para dd/mm/aaaa
+ * Formata uma data para dd/mm/aaaa, aceitando tanto YYYY-MM-DD quanto datas ISO com tempo.
  */
 export function formatDateBR(dateStr: string): string {
-    const d = new Date(dateStr + "T12:00:00");
-    return d.toLocaleDateString("pt-BR");
+    if (!dateStr) return "";
+    let safeStr = dateStr;
+    if (!safeStr.includes("T")) {
+        safeStr = safeStr + "T12:00:00"; // Força o fuso horário seguro se for só a data
+    }
+    const d = new Date(safeStr);
+    return isNaN(d.getTime()) ? "Data Inválida" : d.toLocaleDateString("pt-BR");
 }
