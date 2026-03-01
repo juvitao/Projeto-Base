@@ -10,6 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { formatBRL } from "@/lib/financial-utils";
 import { Button } from "@/components/ui/button";
 import { AddToInventoryDialog } from "@/components/stock/AddToInventoryDialog";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 type MasterBrand = Database["public"]["Tables"]["master_brands"]["Row"];
 type MasterProduct = Database["public"]["Tables"]["master_products"]["Row"] & { brand?: MasterBrand };
@@ -23,6 +26,8 @@ export default function Catalog() {
 
     // Quick Add Modal
     const [isAddOpen, setIsAddOpen] = useState(false);
+    const { user } = useAuth();
+    const { toast } = useToast();
 
     useEffect(() => {
         loadInitialData();
@@ -185,9 +190,36 @@ export default function Catalog() {
                     open={isAddOpen}
                     onClose={() => setIsAddOpen(false)}
                     onSave={async (id, qty, cost, sale) => {
-                        // Normally we would call exact inventory update here
-                        // For demonstration purposed the user can just use the global button
-                        console.log("Importing", id, qty);
+                        if (!user) return;
+                        try {
+                            const { data: existing } = await supabase
+                                .from("vora_inventory")
+                                .select("id, quantity")
+                                .eq("master_product_id", id)
+                                .eq("user_id", user.id)
+                                .single();
+
+                            if (existing) {
+                                await supabase.from("vora_inventory").update({
+                                    quantity: existing.quantity + qty,
+                                    cost_price: cost,
+                                    sale_price: sale,
+                                    updated_at: new Date().toISOString()
+                                }).eq("id", existing.id);
+                            } else {
+                                await supabase.from("vora_inventory").insert({
+                                    user_id: user.id,
+                                    master_product_id: id,
+                                    quantity: qty,
+                                    cost_price: cost,
+                                    sale_price: sale
+                                });
+                            }
+                            toast({ title: "Produto importado para o estoque com sucesso!" });
+                            setIsAddOpen(false);
+                        } catch (err: any) {
+                            toast({ title: "Erro ao importar", description: err.message, variant: "destructive" });
+                        }
                     }}
                 />
             </div>

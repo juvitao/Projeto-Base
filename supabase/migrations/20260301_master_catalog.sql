@@ -4,8 +4,26 @@
 -- We rename existing tables to preserve data instead of dropping them
 -- vora_inventory.catalog_product_id will still point to the same UUIDs
 
-ALTER TABLE brands RENAME TO master_brands;
-ALTER TABLE catalog_products RENAME TO master_products;
+DO $$ 
+BEGIN
+  -- Rename brands -> master_brands
+  IF NOT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename  = 'master_brands') THEN
+    IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename  = 'vora_brands') THEN
+      ALTER TABLE vora_brands RENAME TO master_brands;
+    ELSIF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename  = 'brands') THEN
+      ALTER TABLE brands RENAME TO master_brands;
+    END IF;
+  END IF;
+
+  -- Rename catalog_products -> master_products
+  IF NOT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename  = 'master_products') THEN
+    IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename  = 'vora_catalog_products') THEN
+      ALTER TABLE vora_catalog_products RENAME TO master_products;
+    ELSIF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename  = 'catalog_products') THEN
+      ALTER TABLE catalog_products RENAME TO master_products;
+    END IF;
+  END IF;
+END $$;
 
 -- ==========================================
 -- 2. ADD NEW COLUMNS

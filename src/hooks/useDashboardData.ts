@@ -81,7 +81,7 @@ export function useDashboardData(): DashboardData {
             const [salesRes, clientsRes, inventoryRes, entriesRes, receivablesRes] = await Promise.all([
                 supabase.from("vora_sales").select("*, vora_clients(name, phone)").order("sale_date", { ascending: false }),
                 supabase.from("vora_clients").select("*"),
-                supabase.from("vora_inventory").select("*, master_products(name, category, master_brands(name, color))"),
+                supabase.from("vora_inventory").select("*, master_product:master_products(name, category, brand:master_brands(name, color))"),
                 supabase.from("vora_financial_entries").select("*"),
                 supabase.from("vora_receivables").select("*"),
             ]);
