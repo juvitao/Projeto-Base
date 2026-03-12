@@ -45,31 +45,40 @@ export function useSales() {
         if (!user) return;
         setIsLoading(true);
         try {
+            // 1) Fetch sales with client data in one query
             const { data: salesData, error } = await supabase
                 .from("vora_sales")
-                .select("*")
+                .select("*, client:vora_clients(*)")
                 .order("sale_date", { ascending: false });
             if (error) throw error;
 
-            // Fetch clients and items for each sale
-            const salesWithDetails: SaleWithDetails[] = [];
-            for (const sale of salesData ?? []) {
-                let client: Client | null = null;
-                if (sale.client_id) {
-                    const { data: c } = await supabase
-                        .from("vora_clients")
-                        .select("*")
-                        .eq("id", sale.client_id)
-                        .single();
-                    client = c;
-                }
-                const { data: items } = await supabase
-                    .from("vora_sale_items")
-                    .select("*")
-                    .eq("sale_id", sale.id);
-
-                salesWithDetails.push({ ...sale, client, items: items ?? [] });
+            const allSales = salesData ?? [];
+            if (allSales.length === 0) {
+                setSales([]);
+                setIsLoading(false);
+                return;
             }
+
+            // 2) Batch-fetch all items for all sales in one query
+            const saleIds = allSales.map(s => s.id);
+            const { data: allItems } = await supabase
+                .from("vora_sale_items")
+                .select("*")
+                .in("sale_id", saleIds);
+
+            const itemsBySale = new Map<string, SaleItem[]>();
+            (allItems ?? []).forEach(item => {
+                const list = itemsBySale.get(item.sale_id!) ?? [];
+                list.push(item);
+                itemsBySale.set(item.sale_id!, list);
+            });
+
+            // 3) Assemble
+            const salesWithDetails: SaleWithDetails[] = allSales.map((sale: any) => ({
+                ...sale,
+                client: sale.client ?? null,
+                items: itemsBySale.get(sale.id) ?? [],
+            }));
 
             setSales(salesWithDetails);
         } catch (err: any) {
@@ -110,9 +119,43 @@ export function useSales() {
 
     const deleteSale = async (id: string) => {
         try {
+            // 1) Fetch sale items to know what quantities to revert
+            const { data: saleItems } = await supabase
+                .from("vora_sale_items")
+                .select("*")
+                .eq("sale_id", id);
+
+            // 2) Revert stock for each item that has a product_id in inventory
+            if (saleItems && saleItems.length > 0 && user) {
+                const { data: invItems } = await supabase
+                    .from("vora_inventory")
+                    .select("id, master_product_id, quantity")
+                    .eq("user_id", user.id);
+
+                for (const si of saleItems) {
+                    if (!si.product_id) continue;
+                    // Find inventory item by master_product_id matching sale_item.product_id
+                    const inv = invItems?.find(i => i.master_product_id === si.product_id);
+                    if (inv) {
+                        await supabase
+                            .from("vora_inventory")
+                            .update({ quantity: inv.quantity + si.quantity, updated_at: new Date().toISOString() })
+                            .eq("id", inv.id);
+                    }
+                }
+            }
+
+            // 3) Delete associated receivables
+            await supabase.from("vora_receivables").delete().eq("sale_id", id);
+
+            // 4) Delete sale items (cascade may handle this, but explicit is safer)
+            await supabase.from("vora_sale_items").delete().eq("sale_id", id);
+
+            // 5) Delete the sale itself
             const { error } = await supabase.from("vora_sales").delete().eq("id", id);
             if (error) throw error;
-            toast({ title: "Venda excluída!" });
+
+            toast({ title: "Venda excluída e estoque revertido!" });
             fetchSales();
         } catch (err: any) {
             toast({ title: "Erro ao excluir", description: err.message, variant: "destructive" });

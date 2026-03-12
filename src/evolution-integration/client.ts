@@ -13,7 +13,8 @@ export class EvolutionClient {
         const url = `${this.baseUrl}${path}`;
         const headers = {
             "Content-Type": "application/json",
-            "apikey": this.apiKey,
+            "apikey": this.apiKey, // Evolution v1/v2 header
+            "Authorization": `Bearer ${this.apiKey}`, // Fallback/Alternative Evolution v2 header
             ...options.headers,
         };
 
@@ -24,11 +25,13 @@ export class EvolutionClient {
         const isJson = contentType && contentType.includes("application/json");
 
         if (!response.ok) {
-            let errorMessage = `API Error: ${response.status}`;
+            let errorMessage = `API Error: ${response.status} - ${response.statusText}`;
             if (isJson) {
                 const error = await response.json().catch(() => ({}));
                 errorMessage = error.message || error.response?.message || errorMessage;
+                console.error("Evolution API JSON Error:", error);
             }
+            console.error(`Evolution API Fetch Error [${response.status}]:`, errorMessage, "URL:", url);
             throw new Error(errorMessage);
         }
 
@@ -46,10 +49,7 @@ export class EvolutionClient {
             method: "POST",
             body: JSON.stringify({
                 instanceName: data.instanceName,
-                qrcode: data.qrcode ?? true,
-                integration: "WHATSAPP-BAILEYS",
-                token: data.token,
-                number: data.number,
+                qrcode: data.qrcode ?? true
             }),
         });
     }

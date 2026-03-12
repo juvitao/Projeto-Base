@@ -653,6 +653,72 @@ export interface Database {
         }
         Relationships: []
       }
+      vora_plans: {
+        Row: {
+          id: string
+          name: string
+          features_json: Record<string, boolean>
+          max_clients: number | null
+          price: number
+          has_ai_access: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          features_json?: Record<string, boolean>
+          max_clients?: number | null
+          price?: number
+          has_ai_access?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          features_json?: Record<string, boolean>
+          max_clients?: number | null
+          price?: number
+          has_ai_access?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
+      vora_profiles: {
+        Row: {
+          id: string
+          user_id: string
+          role: string
+          plan_id: string | null
+          is_active: boolean
+          business_name: string | null
+          phone: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          role?: string
+          plan_id?: string | null
+          is_active?: boolean
+          business_name?: string | null
+          phone?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          role?: string
+          plan_id?: string | null
+          is_active?: boolean
+          business_name?: string | null
+          phone?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -691,6 +757,21 @@ export interface Database {
           p_receivables: any
         }
         Returns: string
+      }
+      admin_get_seller_stats: {
+        Args: Record<string, never>
+        Returns: {
+          user_id: string
+          business_name: string | null
+          phone: string | null
+          role: string
+          plan_name: string
+          is_active: boolean
+          client_count: number
+          sale_count: number
+          total_revenue: number
+          created_at: string
+        }[]
       }
     }
     Enums: {

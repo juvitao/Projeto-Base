@@ -77,7 +77,7 @@ export function SaleFormSheet({ open, onClose, onSave }: Props) {
     // Cart
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [productQuery, setProductQuery] = useState("");
-    const { inventory } = useInventory();
+    const { inventory, deductStock } = useInventory();
     const availableInventory = inventory.filter(i => i.quantity > 0);
 
     // Payment
@@ -196,7 +196,7 @@ export function SaleFormSheet({ open, onClose, onSave }: Props) {
         if (!canSubmit || !selectedClient) return;
         setIsSubmitting(true);
         try {
-            await onSave({
+            const result = await onSave({
                 client_id: selectedClient.id,
                 sale_date: saleDate,
                 payment_method: paymentMethod,
@@ -214,6 +214,16 @@ export function SaleFormSheet({ open, onClose, onSave }: Props) {
                 })),
                 receivables: paymentMethod === "fiado" ? installments : [],
             });
+
+            // Deduct stock automatically after successful sale
+            if (result) {
+                await deductStock(
+                    cartItems
+                        .filter(i => i.inventory_id)
+                        .map(i => ({ inventory_id: i.inventory_id, quantity: i.quantity }))
+                );
+            }
+
             onClose();
         } finally {
             setIsSubmitting(false);

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Plus, User, Loader2, Phone } from "lucide-react";
+import { Search, Plus, User, Loader2, Phone, Upload } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ClientDetailModal } from "@/components/clients/ClientDetailModal";
+import { BulkClientImportDialog } from "@/components/clients/BulkClientImportDialog";
 
 interface Client {
   id: string;
@@ -32,6 +33,7 @@ const Clients = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [bulkImportOpen, setBulkImportOpen] = useState(false);
 
   useEffect(() => {
     fetchClients();
@@ -90,12 +92,16 @@ const Clients = () => {
           <p className="text-muted-foreground text-sm">{clients.length} clientes cadastrados</p>
         </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="font-bold uppercase text-xs h-11 px-6 gap-2">
-              <Plus className="w-4 h-4" /> Novo Cliente
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setBulkImportOpen(true)} className="font-bold uppercase text-xs h-11 px-5 gap-2">
+            <Upload className="w-4 h-4" /> Importar em Lote
+          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="font-bold uppercase text-xs h-11 px-6 gap-2">
+                <Plus className="w-4 h-4" /> Novo Cliente
+              </Button>
+            </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle className="text-xl font-black uppercase tracking-tight">Novo Cliente</DialogTitle>
@@ -147,6 +153,7 @@ const Clients = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Search */}
@@ -198,6 +205,12 @@ const Clients = () => {
       <ClientDetailModal
         clientId={selectedClientId}
         onClose={() => setSelectedClientId(null)}
+      />
+
+      <BulkClientImportDialog
+        open={bulkImportOpen}
+        onClose={() => setBulkImportOpen(false)}
+        onImported={fetchClients}
       />
     </div>
   );

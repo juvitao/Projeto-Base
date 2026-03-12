@@ -17,18 +17,29 @@ export function useBrands() {
     const [brands, setBrands] = useState<Brand[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        (async () => {
-            const { data } = await supabase.from("master_brands").select("*").order("name");
-            setBrands(data ?? []);
-            setIsLoading(false);
-        })();
+    const fetchBrands = useCallback(async () => {
+        const { data } = await supabase.from("master_brands").select("*").order("name");
+        setBrands(data ?? []);
+        setIsLoading(false);
     }, []);
 
-    return { brands, isLoading };
+    useEffect(() => { fetchBrands(); }, [fetchBrands]);
+
+    const createBrand = async (name: string) => {
+        const { data, error } = await supabase
+            .from("master_brands")
+            .insert({ name, is_custom: true })
+            .select()
+            .single();
+        if (error) throw error;
+        await fetchBrands();
+        return data;
+    };
+
+    return { brands, isLoading, fetchBrands, createBrand };
 }
 
-// ─── Master Products ───
+// ─── Master Products (for search autocomplete) ───
 export function useMasterProducts(brandId?: string) {
     const [products, setProducts] = useState<MasterProduct[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -54,10 +65,16 @@ export function useMasterProducts(brandId?: string) {
         setIsLoading(false);
     }, [brandId]);
 
-    const createProduct = async (brandId: string, name: string, category?: string) => {
+    const createProduct = async (brandId: string, name: string, category?: string, suggestedPrice?: number) => {
         const { data, error } = await supabase
             .from("master_products")
-            .insert({ brand_id: brandId, name, category: category || null })
+            .insert({
+                brand_id: brandId,
+                name,
+                category: category || null,
+                suggested_price: suggestedPrice || null,
+                is_custom: true
+            })
             .select()
             .single();
         if (error) throw error;
@@ -71,7 +88,7 @@ export function useMasterProducts(brandId?: string) {
     return { products, isLoading, fetchByBrand, searchCatalog, createProduct };
 }
 
-// ─── Inventory ───
+// ─── Inventory (with JOIN — eliminates N+1) ───
 export function useInventory() {
     const { user } = useAuth();
     const { toast } = useToast();
@@ -82,6 +99,7 @@ export function useInventory() {
         if (!user) return;
         setIsLoading(true);
         try {
+            // 1) Fetch inventory items
             const { data: invData, error } = await supabase
                 .from("vora_inventory")
                 .select("*")
@@ -89,25 +107,38 @@ export function useInventory() {
                 .order("created_at", { ascending: false });
             if (error) throw error;
 
-            // Enrich with catalog product + brand
-            const enriched: InventoryWithProduct[] = [];
-            for (const item of invData ?? []) {
-                const { data: cp } = await supabase
-                    .from("master_products")
-                    .select("*")
-                    .eq("id", item.master_product_id)
-                    .single();
-                let brand: Brand | undefined;
-                if (cp) {
-                    const { data: b } = await supabase
-                        .from("master_brands")
-                        .select("*")
-                        .eq("id", cp.brand_id)
-                        .single();
-                    brand = b ?? undefined;
-                }
-                enriched.push({ ...item, master_product: cp ? { ...cp, brand } : undefined });
+            const items = invData ?? [];
+            if (items.length === 0) {
+                setInventory([]);
+                setIsLoading(false);
+                return;
             }
+
+            // 2) Batch-fetch all referenced products in one query
+            const productIds = [...new Set(items.map(i => i.master_product_id))];
+            const { data: productsData } = await supabase
+                .from("master_products")
+                .select("*")
+                .in("id", productIds);
+            const productsMap = new Map((productsData ?? []).map(p => [p.id, p]));
+
+            // 3) Batch-fetch all referenced brands in one query
+            const brandIds = [...new Set((productsData ?? []).map(p => p.brand_id).filter(Boolean))];
+            const { data: brandsData } = brandIds.length > 0
+                ? await supabase.from("master_brands").select("*").in("id", brandIds)
+                : { data: [] };
+            const brandsMap = new Map((brandsData ?? []).map(b => [b.id, b]));
+
+            // 4) Enrich inventory with product + brand
+            const enriched: InventoryWithProduct[] = items.map(item => {
+                const product = productsMap.get(item.master_product_id);
+                const brand = product ? brandsMap.get(product.brand_id) : undefined;
+                return {
+                    ...item,
+                    master_product: product ? { ...product, brand: brand ?? undefined } : undefined,
+                };
+            });
+
             setInventory(enriched);
         } catch (err: any) {
             toast({ title: "Erro ao carregar estoque", description: err.message, variant: "destructive" });
@@ -121,7 +152,7 @@ export function useInventory() {
     const addToInventory = async (masterProductId: string, quantity: number, costPrice: number, salePrice: number) => {
         if (!user) return;
         try {
-            // Upsert: if already exists, increase quantity
+            // Upsert: if product already in inventory, add quantity
             const existing = inventory.find(i => i.master_product_id === masterProductId);
             if (existing) {
                 const { error } = await supabase
@@ -172,5 +203,24 @@ export function useInventory() {
         }
     };
 
-    return { inventory, isLoading, fetchInventory, addToInventory, updateInventory, deleteInventoryItem };
+    /** Deduct stock after a sale. Called from SaleFormSheet. */
+    const deductStock = async (items: { inventory_id: string | null; quantity: number }[]) => {
+        try {
+            for (const item of items) {
+                if (!item.inventory_id) continue;
+                const inv = inventory.find(i => i.id === item.inventory_id);
+                if (!inv) continue;
+                const newQty = Math.max(0, inv.quantity - item.quantity);
+                await supabase
+                    .from("vora_inventory")
+                    .update({ quantity: newQty, updated_at: new Date().toISOString() })
+                    .eq("id", item.inventory_id);
+            }
+            fetchInventory();
+        } catch (err: any) {
+            console.error("Erro ao descontar estoque:", err);
+        }
+    };
+
+    return { inventory, isLoading, fetchInventory, addToInventory, updateInventory, deleteInventoryItem, deductStock };
 }

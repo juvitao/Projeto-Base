@@ -25,14 +25,24 @@ export function useReceivables() {
                 .order("due_date", { ascending: true });
             if (error) throw error;
 
-            // Auto-update overdue status
+            // Auto-update overdue status and persist to DB
             const today = new Date().toISOString().split("T")[0];
+            const overdueIds: string[] = [];
             const updated = (data ?? []).map((r) => {
                 if (r.status === "pending" && r.due_date < today) {
+                    overdueIds.push(r.id);
                     return { ...r, status: "overdue" };
                 }
                 return r;
             });
+
+            // Persist overdue status in one batch update
+            if (overdueIds.length > 0) {
+                await supabase
+                    .from("vora_receivables")
+                    .update({ status: "overdue" } as any)
+                    .in("id", overdueIds);
+            }
 
             setReceivables(updated);
         } catch (err: any) {

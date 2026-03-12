@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, TrendingUp, TrendingDown, Clock, LayoutDashboard } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, Clock, LayoutDashboard, History } from "lucide-react";
 
 import { FinancialKPICards } from "@/components/financial/FinancialKPICards";
 import { EntryFormDialog } from "@/components/financial/EntryFormDialog";
 import { EntriesTable } from "@/components/financial/EntriesTable";
 import { ReceivableFormDialog } from "@/components/financial/ReceivableFormDialog";
 import { ReceivablesTable } from "@/components/financial/ReceivablesTable";
+import { LegacyDebtImportDialog } from "@/components/financial/LegacyDebtImportDialog";
 
 import { useFinancialEntries } from "@/hooks/useFinancialEntries";
 import { useReceivables } from "@/hooks/useReceivables";
@@ -34,6 +35,7 @@ const Financial = () => {
     const [editingEntry, setEditingEntry] = useState<FinancialEntry | null>(null);
     const [editingReceivable, setEditingReceivable] = useState<Receivable | null>(null);
     const [entryDialogType, setEntryDialogType] = useState<"income" | "expense">("income");
+    const [legacyDebtOpen, setLegacyDebtOpen] = useState(false);
 
     // Handlers: Income
     const openNewIncome = () => { setEditingEntry(null); setEntryDialogType("income"); setIncomeDialogOpen(true); };
@@ -173,9 +175,14 @@ const Financial = () => {
                 <TabsContent value="receivables" className="space-y-4">
                     <div className="flex items-center justify-between">
                         <h2 className="text-lg font-bold">Recebíveis / Fiados</h2>
-                        <Button onClick={openNewReceivable} size="sm" className="gap-1.5">
-                            <Plus className="h-4 w-4" /> Novo Fiado
-                        </Button>
+                        <div className="flex gap-2">
+                            <Button variant="outline" onClick={() => setLegacyDebtOpen(true)} size="sm" className="gap-1.5">
+                                <History className="h-4 w-4" /> Importar Dívida Antiga
+                            </Button>
+                            <Button onClick={openNewReceivable} size="sm" className="gap-1.5">
+                                <Plus className="h-4 w-4" /> Novo Fiado
+                            </Button>
+                        </div>
                     </div>
                     <ReceivablesTable
                         receivables={receivableHook.receivables}
@@ -207,6 +214,11 @@ const Financial = () => {
                 onClose={() => setReceivableDialogOpen(false)}
                 onSave={handleSaveReceivable}
                 editData={editingReceivable}
+            />
+            <LegacyDebtImportDialog
+                open={legacyDebtOpen}
+                onClose={() => setLegacyDebtOpen(false)}
+                onImported={receivableHook.fetchReceivables}
             />
         </div>
     );

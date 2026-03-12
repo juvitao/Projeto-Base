@@ -50,15 +50,20 @@ const DeepLinkHandler = ({ children }: { children: React.ReactNode }) => {
 
 import Dashboard from "./pages/Dashboard";
 import Clients from "./pages/Clients";
-import ClientDetails from "./pages/ClientDetails";
 import Stock from "./pages/Stock";
 import Financial from "./pages/Financial";
 import Sales from "./pages/Sales";
 import Whatsapp from "./pages/Whatsapp";
 import SettingsPage from "./pages/Settings";
-import Catalog from "./pages/Catalog";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+
+// Admin
+import { AdminRoute } from "./components/admin/AdminRoute";
+import { AdminLayout } from "./components/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminPlans from "./pages/admin/AdminPlans";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -94,16 +99,6 @@ const App = () => (
                   }
                 />
 
-                <Route
-                  path="/clients/:id"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardLayout>
-                        <ClientDetails />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
 
                 <Route
                   path="/stock"
@@ -138,16 +133,6 @@ const App = () => (
                   }
                 />
 
-                <Route
-                  path="/catalog"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardLayout>
-                        <Catalog />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
 
                 <Route
                   path="/whatsapp"
@@ -160,6 +145,7 @@ const App = () => (
                   }
                 />
 
+
                 <Route
                   path="/settings"
                   element={
@@ -170,6 +156,20 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
+
+                {/* Admin Panel (RBAC: admin only) */}
+                <Route
+                  path="/admin"
+                  element={
+                    <AdminRoute>
+                      <AdminLayout />
+                    </AdminRoute>
+                  }
+                >
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="users" element={<AdminUsers />} />
+                  <Route path="plans" element={<AdminPlans />} />
+                </Route>
 
                 {/* Catch-all route */}
                 <Route path="*" element={<NotFound />} />
