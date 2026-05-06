@@ -101,11 +101,18 @@ export function useReceivables() {
 
     const markAsPaid = async (id: string, paymentDate?: string) => {
         const date = paymentDate || new Date().toISOString().split("T")[0];
+        const receivable = receivables.find(r => r.id === id);
         await updateReceivable(id, {
             status: "paid",
-            amount_paid: receivables.find(r => r.id === id)?.amount_due,
-            ...(({ payment_date: date }) as any),
-        });
+            amount_paid: receivable?.amount_due,
+        } as any);
+        // Also persist payment_date separately (not in typed Update)
+        if (receivable) {
+            await supabase
+                .from("vora_receivables")
+                .update({ payment_date: date } as any)
+                .eq("id", id);
+        }
     };
 
     return { receivables, isLoading, fetchReceivables, createReceivable, updateReceivable, deleteReceivable, markAsPaid };
