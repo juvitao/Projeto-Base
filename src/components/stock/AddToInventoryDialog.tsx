@@ -30,7 +30,7 @@ type MasterProduct = Database["public"]["Tables"]["master_products"]["Row"];
 interface Props {
     open: boolean;
     onClose: () => void;
-    onSave: (masterProductId: string, quantity: number, costPrice: number, salePrice: number) => Promise<void>;
+    onSave: (masterProductId: string, quantity: number, costPrice: number, salePrice: number, expirationDate?: string | null) => Promise<void>;
 }
 
 export function AddToInventoryDialog({ open, onClose, onSave }: Props) {
@@ -53,6 +53,7 @@ export function AddToInventoryDialog({ open, onClose, onSave }: Props) {
     const [quantity, setQuantity] = useState("1");
     const [salePrice, setSalePrice] = useState("");
     const [commission, setCommission] = useState("30");
+    const [expirationDate, setExpirationDate] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Calculated cost
@@ -78,6 +79,7 @@ export function AddToInventoryDialog({ open, onClose, onSave }: Props) {
             setShowNewBrandInput(false);
             setQuantity("1");
             setSalePrice("");
+            setExpirationDate("");
             // Read default commission from Settings (localStorage)
             try {
                 const settingsRaw = Object.keys(localStorage).find(k => k.startsWith("vora_settings_"));
@@ -132,7 +134,8 @@ export function AddToInventoryDialog({ open, onClose, onSave }: Props) {
                 newProduct.id,
                 parseInt(quantity) || 1,
                 Math.round(calculatedCost * 100) / 100,
-                parseFloat(salePrice) || 0
+                parseFloat(salePrice) || 0,
+                expirationDate.trim() || null
             );
             onClose();
         } catch (err: any) {
@@ -265,7 +268,7 @@ export function AddToInventoryDialog({ open, onClose, onSave }: Props) {
                     {selectedBrandId && directProductName.trim() && (
                         <div className="space-y-3">
                             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">3. Quantidade e Preços</Label>
-                            <div className="grid grid-cols-3 gap-3">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                                 <div className="space-y-1">
                                     <Label className="text-xs">Quantidade</Label>
                                     <Input
@@ -298,6 +301,20 @@ export function AddToInventoryDialog({ open, onClose, onSave }: Props) {
                                         placeholder="30"
                                         value={commission}
                                         onChange={(e) => setCommission(e.target.value)}
+                                        className="h-9"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-xs">Validade</Label>
+                                    <Input
+                                        placeholder="MM/AAAA"
+                                        value={expirationDate}
+                                        onChange={(e) => {
+                                            let val = e.target.value.replace(/\D/g, "");
+                                            if (val.length > 2) val = val.substring(0, 2) + "/" + val.substring(2, 6);
+                                            setExpirationDate(val);
+                                        }}
+                                        maxLength={7}
                                         className="h-9"
                                     />
                                 </div>

@@ -24,6 +24,7 @@ import {
     Loader2,
     StickyNote,
     Save,
+    Trash2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -68,7 +69,7 @@ const PAYMENT_LABELS: Record<string, string> = {
     pix: "Pix",
     debito: "Débito",
     credito: "Crédito",
-    fiado: "Fiado",
+    fiado: "Venda na Confiança",
 };
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof CheckCircle2 }> = {
@@ -213,6 +214,26 @@ export function ClientDetailModal({ clientId, onClose }: ClientDetailModalProps)
                                         {client.created_at && <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />Desde {formatDate(client.created_at.split("T")[0])}</span>}
                                     </div>
                                 </div>
+                                <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-8 w-8 text-destructive shrink-0 mr-6" 
+                                    onClick={async () => {
+                                        if (window.confirm("Tem certeza que deseja excluir este cliente? Todas as vendas associadas podem ser afetadas.")) {
+                                            try {
+                                                const { error } = await supabase.from("vora_clients").delete().eq("id", client.id);
+                                                if (error) throw error;
+                                                toast({ title: "Cliente excluído com sucesso!" });
+                                                onClose();
+                                                window.location.reload(); // Quick refresh
+                                            } catch (err: any) {
+                                                toast({ title: "Erro ao excluir", description: err.message, variant: "destructive" });
+                                            }
+                                        }
+                                    }}
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </Button>
                             </div>
                         </DialogHeader>
 

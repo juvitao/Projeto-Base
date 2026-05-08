@@ -30,20 +30,20 @@ function PaymentBadge({ method }: { method: string }) {
         dinheiro: "bg-emerald-500/20 text-emerald-400",
         pix: "bg-cyan-500/20 text-cyan-400",
         debito: "bg-blue-500/20 text-blue-400",
-        credito: "bg-purple-500/20 text-purple-400",
+        credito: "bg-orange-500/20 text-orange-400",
         fiado: "bg-red-500/20 text-red-400",
     };
-    const labels: Record<string, string> = {
+    const paymentLabels: Record<string, string> = {
         dinheiro: "Dinheiro",
         pix: "Pix",
         debito: "Débito",
         credito: "Crédito",
-        fiado: "Fiado",
+        fiado: "Venda na Confiança",
     };
     const key = method?.startsWith("credito") ? "credito" : method;
     return (
         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${colors[key] ?? "bg-muted text-muted-foreground"}`}>
-            {labels[key] ?? method}
+            {paymentLabels[key] ?? method}
         </span>
     );
 }

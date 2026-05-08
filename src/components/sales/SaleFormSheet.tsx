@@ -61,7 +61,7 @@ const PAYMENT_OPTIONS = [
     { value: "pix", label: "Pix" },
     { value: "debito", label: "Débito" },
     { value: "credito", label: "Crédito" },
-    { value: "fiado", label: "Fiado / Parcelamento de Boca" },
+    { value: "fiado", label: "Venda na Confiança" },
 ];
 
 let itemIdCounter = 0;
@@ -210,7 +210,7 @@ export function SaleFormSheet({ open, onClose, onSave }: Props) {
                     name: i.name,
                     quantity: i.quantity,
                     unit_price: i.unit_price,
-                    needs_ordering: false,
+                    needs_ordering: !i.inventory_id,
                 })),
                 receivables: paymentMethod === "fiado" ? installments : [],
             });
@@ -353,8 +353,8 @@ export function SaleFormSheet({ open, onClose, onSave }: Props) {
                                         onChange={(e) => setProductQuery(e.target.value)}
                                         className="text-sm pl-9 h-10 rounded-xl bg-muted/30 border-border/50 focus:bg-background transition-colors"
                                     />
-                                    {productQuery.length >= 2 && filteredInventory.length > 0 && (
-                                        <div className="absolute z-50 top-full left-0 right-0 mt-1.5 bg-popover border border-border/50 rounded-xl shadow-xl max-h-52 overflow-auto p-1">
+                                    {productQuery.length >= 2 && (
+                                        <div className="absolute z-50 top-full left-0 right-0 mt-1.5 bg-popover border border-border/50 rounded-xl shadow-xl max-h-52 overflow-auto p-1 flex flex-col">
                                             {filteredInventory.map((inv) => (
                                                 <button
                                                     key={inv.id}
@@ -373,6 +373,27 @@ export function SaleFormSheet({ open, onClose, onSave }: Props) {
                                                     </div>
                                                 </button>
                                             ))}
+                                            <button
+                                                className={`w-full text-left px-3 py-2.5 hover:bg-primary/10 rounded-lg text-sm transition-colors flex items-center gap-2 font-medium text-primary ${filteredInventory.length > 0 ? "border-t border-border/50 mt-1 pt-2.5 rounded-t-none" : ""}`}
+                                                onClick={() => {
+                                                    setCartItems((prev) => [
+                                                        ...prev,
+                                                        {
+                                                            id: String(++itemIdCounter),
+                                                            product_id: null,
+                                                            inventory_id: null,
+                                                            name: productQuery.trim(),
+                                                            quantity: 1,
+                                                            unit_price: 0,
+                                                            max_qty: 999,
+                                                        },
+                                                    ]);
+                                                    setProductQuery("");
+                                                }}
+                                            >
+                                                <Plus className="w-4 h-4 shrink-0" />
+                                                <span className="truncate">Adicionar "{productQuery}" (Sem Estoque)</span>
+                                            </button>
                                         </div>
                                     )}
                                 </div>
@@ -429,10 +450,10 @@ export function SaleFormSheet({ open, onClose, onSave }: Props) {
                                     </div>
                                 </div>
 
-                                {/* Fiado / Parcelamento */}
+                                {/* Venda na Confiança / Parcelamento */}
                                 {paymentMethod === "fiado" && (
                                     <div className="space-y-3 bg-muted/30 p-3 rounded-lg">
-                                        <p className="text-xs font-semibold text-yellow-500">Parcelamento de Boca</p>
+                                        <p className="text-xs font-semibold text-yellow-500">Venda na Confiança (Parcelado)</p>
                                         <div className="grid grid-cols-3 gap-2">
                                             <div className="space-y-1">
                                                 <Label className="text-xs">Parcelas</Label>

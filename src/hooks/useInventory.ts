@@ -149,7 +149,7 @@ export function useInventory() {
 
     useEffect(() => { fetchInventory(); }, [fetchInventory]);
 
-    const addToInventory = async (masterProductId: string, quantity: number, costPrice: number, salePrice: number) => {
+    const addToInventory = async (masterProductId: string, quantity: number, costPrice: number, salePrice: number, expirationDate?: string | null) => {
         if (!user) return;
         try {
             // Upsert: if product already in inventory, add quantity
@@ -161,6 +161,7 @@ export function useInventory() {
                         quantity: existing.quantity + quantity,
                         cost_price: costPrice,
                         sale_price: salePrice,
+                        expiration_date: expirationDate || existing.expiration_date,
                         updated_at: new Date().toISOString(),
                     })
                     .eq("id", existing.id);
@@ -168,7 +169,7 @@ export function useInventory() {
             } else {
                 const { error } = await supabase
                     .from("vora_inventory")
-                    .insert({ user_id: user.id, master_product_id: masterProductId, quantity, cost_price: costPrice, sale_price: salePrice });
+                    .insert({ user_id: user.id, master_product_id: masterProductId, quantity, cost_price: costPrice, sale_price: salePrice, expiration_date: expirationDate || null });
                 if (error) throw error;
             }
             toast({ title: "Estoque atualizado!" });

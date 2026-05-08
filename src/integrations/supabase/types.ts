@@ -384,6 +384,7 @@ export interface Database {
           quantity: number
           cost_price: number
           sale_price: number
+          expiration_date: string | null
           created_at: string
           updated_at: string
         }
@@ -394,6 +395,7 @@ export interface Database {
           quantity?: number
           cost_price?: number
           sale_price?: number
+          expiration_date?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -404,6 +406,7 @@ export interface Database {
           quantity?: number
           cost_price?: number
           sale_price?: number
+          expiration_date?: string | null
           created_at?: string
           updated_at?: string
         }

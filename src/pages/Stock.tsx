@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
     Package,
     Plus,
@@ -69,6 +69,16 @@ const Stock = () => {
         const matchesBrand = brandFilter === "all" || item.master_product?.brand?.id === brandFilter;
         return matchesSearch && matchesBrand;
     });
+
+    const groupedInventory = useMemo(() => {
+        const groups: Record<string, typeof filtered> = {};
+        for (const item of filtered) {
+            const bName = item.master_product?.brand?.name || "Sem Marca";
+            if (!groups[bName]) groups[bName] = [];
+            groups[bName].push(item);
+        }
+        return Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0]));
+    }, [filtered]);
 
     const totalStockValue = inventory.reduce((sum, i) => sum + i.quantity * i.sale_price, 0);
     const totalCostValue = inventory.reduce((sum, i) => sum + i.quantity * i.cost_price, 0);
@@ -148,77 +158,100 @@ const Stock = () => {
                 </Select>
             </div>
 
-            {/* PRODUCT GRID */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {/* PRODUCT GROUPS */}
+            <div className="space-y-10">
                 {isLoading ? (
-                    <div className="col-span-full py-20 flex flex-col items-center justify-center gap-4 text-muted-foreground">
+                    <div className="py-20 flex flex-col items-center justify-center gap-4 text-muted-foreground">
                         <Loader2 className="w-8 h-8 animate-spin text-primary" />
                         <p className="font-bold uppercase text-xs">Carregando estoque...</p>
                     </div>
                 ) : filtered.length === 0 ? (
-                    <div className="col-span-full py-20 flex flex-col items-center justify-center border-2 border-dashed rounded-xl text-muted-foreground">
+                    <div className="py-20 flex flex-col items-center justify-center border-2 border-dashed rounded-xl text-muted-foreground">
                         <AlertCircle className="w-10 h-10 mb-3 opacity-30" />
                         <p className="font-bold">Nenhum item encontrado.</p>
-                        <p className="text-xs mt-1">Use &quot;Entrada de Mercadoria&quot; para adicionar.</p>
+                        <p className="text-xs mt-1">Use "Entrada de Mercadoria" para adicionar.</p>
                     </div>
                 ) : (
-                    filtered.map((item) => {
-                        const brand = item.master_product?.brand;
-                        const product = item.master_product;
+                    groupedInventory.map(([brandName, items]) => {
+                        const brandColor = items[0]?.master_product?.brand?.color || "#888";
                         return (
-                            <Card key={item.id} className="overflow-hidden group hover:border-primary/50 transition-all">
-                                <div className="p-4 pb-2">
-                                    <div className="flex justify-between items-start">
-                                        <div className="space-y-1.5 flex-1 min-w-0">
-                                            {brand && (
-                                                <span
-                                                    className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase px-2 py-0.5 rounded-full"
-                                                    style={{
-                                                        backgroundColor: brand.color + "20",
-                                                        color: brand.color,
-                                                        border: `1px solid ${brand.color}40`,
-                                                    }}
-                                                >
-                                                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: brand.color }} />
-                                                    {brand.name}
-                                                </span>
-                                            )}
-                                            <p className="text-base font-bold tracking-tight leading-tight truncate">
-                                                {product?.name ?? "Produto"}
-                                            </p>
-                                            {product?.category && (
-                                                <p className="text-xs text-muted-foreground">{product.category}</p>
-                                            )}
-                                        </div>
-                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2">
-                                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(item)}>
-                                                <Edit2 className="w-3.5 h-3.5" />
-                                            </Button>
-                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteInventoryItem(item.id)}>
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </Button>
-                                        </div>
-                                    </div>
+                            <section key={brandName} className="space-y-4">
+                                <div className="flex items-center gap-2 border-b pb-2">
+                                    <span className="w-3 h-3 rounded-full" style={{ backgroundColor: brandColor }} />
+                                    <h2 className="text-lg font-black uppercase tracking-tight">{brandName}</h2>
+                                    <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full font-bold">
+                                        {items.length} {items.length === 1 ? 'item' : 'itens'}
+                                    </span>
                                 </div>
-                                <CardContent className="p-4 pt-1">
-                                    <div className="grid grid-cols-3 gap-3 pt-3 border-t border-border/50">
-                                        <div>
-                                            <p className="text-[9px] font-bold text-muted-foreground uppercase">Qtd</p>
-                                            <p className={`text-lg font-black ${item.quantity <= 3 ? (item.quantity === 0 ? "text-red-500" : "text-yellow-500") : ""}`}>
-                                                {item.quantity}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <p className="text-[9px] font-bold text-muted-foreground uppercase">Custo</p>
-                                            <p className="text-sm font-bold text-muted-foreground">{formatBRL(item.cost_price)}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-[9px] font-bold text-primary uppercase">Venda</p>
-                                            <p className="text-sm font-black">{formatBRL(item.sale_price)}</p>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                                    {items.map((item) => {
+                                        const brand = item.master_product?.brand;
+                                        const product = item.master_product;
+                                        return (
+                                            <Card key={item.id} className="overflow-hidden group hover:border-primary/50 transition-all flex flex-col">
+                                                <div className="p-4 pb-2">
+                                                    <div className="flex justify-between items-start">
+                                                        <div className="space-y-1.5 flex-1 min-w-0">
+                                                            {brand && (
+                                                                <span
+                                                                    className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase px-2 py-0.5 rounded-full"
+                                                                    style={{
+                                                                        backgroundColor: brand.color + "20",
+                                                                        color: brand.color,
+                                                                        border: `1px solid ${brand.color}40`,
+                                                                    }}
+                                                                >
+                                                                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: brand.color }} />
+                                                                    {brand.name}
+                                                                </span>
+                                                            )}
+                                                            <p className="text-base font-bold tracking-tight leading-tight truncate">
+                                                                {product?.name ?? "Produto"}
+                                                            </p>
+                                                            <div className="flex items-center gap-2">
+                                                                {product?.category && (
+                                                                    <p className="text-xs text-muted-foreground">{product.category}</p>
+                                                                )}
+                                                                {item.expiration_date && (
+                                                                    <span className="text-[10px] font-bold bg-yellow-500/10 text-yellow-600 px-1.5 py-0.5 rounded">
+                                                                        Val: {item.expiration_date}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2">
+                                                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(item)}>
+                                                                <Edit2 className="w-3.5 h-3.5" />
+                                                            </Button>
+                                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteInventoryItem(item.id)}>
+                                                                <Trash2 className="w-3.5 h-3.5" />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <CardContent className="p-4 pt-1 mt-auto">
+                                                    <div className="grid grid-cols-3 gap-3 pt-3 border-t border-border/50">
+                                                        <div>
+                                                            <p className="text-[9px] font-bold text-muted-foreground uppercase">Qtd</p>
+                                                            <p className={`text-lg font-black ${item.quantity <= 3 ? (item.quantity === 0 ? "text-red-500" : "text-yellow-500") : ""}`}>
+                                                                {item.quantity}
+                                                            </p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[9px] font-bold text-muted-foreground uppercase">Custo</p>
+                                                            <p className="text-sm font-bold text-muted-foreground">{formatBRL(item.cost_price)}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[9px] font-bold text-primary uppercase">Venda</p>
+                                                            <p className="text-sm font-black">{formatBRL(item.sale_price)}</p>
+                                                        </div>
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                        );
+                                    })}
+                                </div>
+                            </section>
                         );
                     })
                 )}

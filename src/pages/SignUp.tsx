@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { VoraLogo } from "@/components/VoraLogo";
 
-const Login = () => {
+const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -23,22 +23,31 @@ const Login = () => {
     });
   }, [navigate]);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      // Sign In
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signUp({
         email,
-        password
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`
+        }
       });
       if (error) throw error;
-      toast({ title: "Login realizado!" });
-      navigate("/");
+
+      toast({
+        title: "Conta criada!",
+        description: "Verifique seu email para confirmar o cadastro. Se não receber, verifique a pasta de SPAM ou desabilite 'Confirm email' no Supabase."
+      });
+      
+      // Opcional: redirecionar para o login após criar a conta
+      // navigate("/login");
+      
     } catch (error: any) {
       toast({
-        title: "Erro",
+        title: "Erro ao criar conta",
         description: error.message || "Erro ao autenticar",
         variant: "destructive"
       });
@@ -55,18 +64,18 @@ const Login = () => {
           <VoraLogo size="lg" className="scale-125 transition-transform hover:scale-130 duration-700" withText={true} />
         </div>
 
-        {/* Login Form */}
+        {/* SignUp Form */}
         <div className="bg-card p-8 rounded-2xl shadow-lg border border-border space-y-6">
           <div className="space-y-2 text-left">
             <h2 className="text-2xl font-bold text-foreground">
-              Bem-vindo
+              Criar conta
             </h2>
             <p className="text-muted-foreground font-light">
-              Entre para acessar o sistema
+              Preencha os dados para criar sua nova conta
             </p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-5">
+          <form onSubmit={handleSignUp} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="email" className="font-medium">Email</Label>
               <div className="relative">
@@ -106,19 +115,19 @@ const Login = () => {
               {isLoading ? (
                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Aguarde...</>
               ) : (
-                "Entrar"
+                "Criar conta"
               )}
             </Button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground font-light">
-              Não tem conta?{" "}
+              Já tem conta?{" "}
               <Link
-                to="/signup"
+                to="/login"
                 className="text-primary font-medium hover:underline"
               >
-                Crie agora
+                Fazer login
               </Link>
             </p>
           </div>
@@ -128,5 +137,4 @@ const Login = () => {
   );
 };
 
-export default Login;
-
+export default SignUp;

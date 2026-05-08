@@ -56,6 +56,7 @@ import Sales from "./pages/Sales";
 import Whatsapp from "./pages/Whatsapp";
 import SettingsPage from "./pages/Settings";
 import Login from "./pages/Login";
+import SignUp from "./pages/SignUp";
 import NotFound from "./pages/NotFound";
 
 // Admin
@@ -76,6 +77,7 @@ const App = () => (
             <BrowserRouter>
               <Routes>
                 <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<SignUp />} />
 
                 <Route
                   path="/"
