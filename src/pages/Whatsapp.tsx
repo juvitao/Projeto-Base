@@ -58,8 +58,12 @@ function WhatsAppConnectFlow({ onConnected }: { onConnected: () => void }) {
     }, []);
 
     const handleConnect = async () => {
-        if (!client || !instanceName.trim()) {
-            toast.error("Nome da instância é obrigatório");
+        if (!client) {
+            toast.error("Evolution API nao configurada (faltam VITE_EVOLUTION_API_URL e VITE_EVOLUTION_API_KEY no env)");
+            return;
+        }
+        if (!instanceName.trim()) {
+            toast.error("Nome da instancia e obrigatorio");
             return;
         }
         setLoading(true);
