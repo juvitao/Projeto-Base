@@ -23,7 +23,7 @@ export function AdminRoute({ children }: Props) {
     }
 
     if (!user) {
-        return <Navigate to="/auth" replace />;
+        return <Navigate to="/login" replace />;
     }
 
     if (!isAdmin) {

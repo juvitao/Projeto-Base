@@ -79,11 +79,11 @@ export function useDashboardData(): DashboardData {
         setIsLoading(true);
         try {
             const [salesRes, clientsRes, inventoryRes, entriesRes, receivablesRes] = await Promise.all([
-                supabase.from("vora_sales").select("*, vora_clients(name, phone)").order("sale_date", { ascending: false }),
-                supabase.from("vora_clients").select("*"),
-                supabase.from("vora_inventory").select("*, master_product:master_products(name, category, brand:master_brands(name, color))"),
-                supabase.from("vora_financial_entries").select("*"),
-                supabase.from("vora_receivables").select("*"),
+                supabase.from("vora_sales").select("*, vora_clients(name, phone)").eq("user_id", user.id).order("sale_date", { ascending: false }),
+                supabase.from("vora_clients").select("*").eq("user_id", user.id),
+                supabase.from("vora_inventory").select("*, master_product:master_products(name, category, brand:master_brands(name, color))").eq("user_id", user.id),
+                supabase.from("vora_financial_entries").select("*").eq("user_id", user.id),
+                supabase.from("vora_receivables").select("*").eq("user_id", user.id),
             ]);
             setRawSales(salesRes.data ?? []);
             setRawClients(clientsRes.data ?? []);

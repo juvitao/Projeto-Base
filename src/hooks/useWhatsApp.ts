@@ -2,8 +2,8 @@ import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useDashboard } from '@/contexts/DashboardContext';
 
-const EVOLUTION_API_URL = 'https://evo.jotabot.site';
-const EVOLUTION_API_KEY = 'JotaBotEVO2025_API_Key_Definitiva';
+const EVOLUTION_API_URL = import.meta.env.VITE_EVOLUTION_API_URL || 'https://evo.jotabot.site';
+const EVOLUTION_API_KEY = import.meta.env.VITE_EVOLUTION_API_KEY || '';
 
 export interface WhatsAppChat {
     id: string; // remoteJid
@@ -41,64 +41,64 @@ export function useWhatsApp() {
     const [isLoadingMessages, setIsLoadingMessages] = useState<boolean>(false);
 
     // 1. Fetch valid instance name
-    useEffect(() => {
-        const fetchInstanceName = async () => {
-            setIsLoadingInstance(true);
-            try {
-                const { data: { user } } = await supabase.auth.getUser();
-                if (!user) return;
+    const fetchInstanceName = useCallback(async () => {
+        setIsLoadingInstance(true);
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
 
-                let name = '';
+            let name = '';
 
-                // Own connection
-                const { data: ownConn } = await (supabase as any)
-                    .from('whatsapp_connections')
-                    .select('instance_name, status')
-                    .eq('user_id', user.id)
-                    .eq('status', 'connected')
-                    .maybeSingle();
+            // Own connection
+            const { data: ownConn } = await (supabase as any)
+                .from('whatsapp_connections')
+                .select('instance_name, status')
+                .eq('user_id', user.id)
+                .eq('status', 'connected')
+                .maybeSingle();
 
-                if (ownConn?.instance_name) {
-                    name = ownConn.instance_name;
-                } else if (workspaceId) {
-                    // Workspace owner's connection
-                    const { data: ws } = await (supabase as any)
-                        .from('workspaces')
-                        .select('owner_id')
-                        .eq('id', workspaceId)
-                        .single();
+            if (ownConn?.instance_name) {
+                name = ownConn.instance_name;
+            } else if (workspaceId) {
+                // Workspace owner's connection
+                const { data: ws } = await (supabase as any)
+                    .from('workspaces')
+                    .select('owner_id')
+                    .eq('id', workspaceId)
+                    .single();
 
-                    if (ws?.owner_id && ws.owner_id !== user.id) {
-                        const { data: ownerConn } = await (supabase as any)
-                            .from('whatsapp_connections')
-                            .select('instance_name, status')
-                            .eq('user_id', ws.owner_id)
-                            .eq('status', 'connected')
-                            .maybeSingle();
+                if (ws?.owner_id && ws.owner_id !== user.id) {
+                    const { data: ownerConn } = await (supabase as any)
+                        .from('whatsapp_connections')
+                        .select('instance_name, status')
+                        .eq('user_id', ws.owner_id)
+                        .eq('status', 'connected')
+                        .maybeSingle();
 
-                        if (ownerConn?.instance_name) {
-                            name = ownerConn.instance_name;
-                        }
+                    if (ownerConn?.instance_name) {
+                        name = ownerConn.instance_name;
                     }
                 }
-
-                if (name) {
-                    setInstanceName(name);
-                    setIsConnected(true);
-                } else {
-                    setIsConnected(false);
-                }
-
-            } catch (err) {
-                console.error('[WhatsApp] Error fetching instance name:', err);
-                setIsConnected(false);
-            } finally {
-                setIsLoadingInstance(false);
             }
-        };
 
-        fetchInstanceName();
+            if (name) {
+                setInstanceName(name);
+                setIsConnected(true);
+            } else {
+                setIsConnected(false);
+            }
+
+        } catch (err) {
+            console.error('[WhatsApp] Error fetching instance name:', err);
+            setIsConnected(false);
+        } finally {
+            setIsLoadingInstance(false);
+        }
     }, [workspaceId]);
+
+    useEffect(() => {
+        fetchInstanceName();
+    }, [fetchInstanceName]);
 
     // Format chat timestamp safely
     const formatTime = (timestampMs: number) => {
@@ -163,10 +163,7 @@ export function useWhatsApp() {
                     };
                 });
 
-                if (mappedChats.length > 0) {
-                    console.log("[WhatsApp] Sample mapped chat ID:", mappedChats[0].id);
-                    console.log("[WhatsApp] Sample raw chat from API:", data[0]);
-                }
+
 
                 // Sort by most recent
                 mappedChats.sort((a, b) => b.timestamp - a.timestamp);
@@ -199,7 +196,7 @@ export function useWhatsApp() {
             if (!res.ok) throw new Error(`Evolution API Error: ${res.status}`);
             const data = await res.json();
 
-            console.log("[WhatsApp] Raw messages from API:", data);
+
 
             // Sometimes the array is direct, sometimes inside .messages
             const rawMsgs = Array.isArray(data) ? data : (data.messages || []);
@@ -320,6 +317,7 @@ export function useWhatsApp() {
         isLoadingMessages,
         fetchChats,
         fetchMessages,
-        sendMessage
+        sendMessage,
+        reconnect: fetchInstanceName,
     };
 }

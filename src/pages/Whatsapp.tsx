@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,12 +18,217 @@ import {
     UserCircle2,
     Filter,
     Loader2,
-    AlertCircle
+    AlertCircle,
+    Smartphone,
+    QrCode,
+    RefreshCcw,
+    Wifi,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useWhatsApp } from "@/hooks/useWhatsApp";
+import { useEvolutionConfig } from "@/evolution-integration/useEvolutionConfig";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
+
+// ─── Componente de Conexão QR Code ───
+function WhatsAppConnectFlow({ onConnected }: { onConnected: () => void }) {
+    const { client } = useEvolutionConfig();
+    const { user } = useAuth();
+    const [step, setStep] = useState<"naming" | "qr" | "success">("naming");
+    const [instanceName, setInstanceName] = useState("");
+    const [qrCode, setQrCode] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [statusMsg, setStatusMsg] = useState("");
+    const pollRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Gerar nome automático baseado no user
+    useEffect(() => {
+        if (user?.email) {
+            const name = "vora-" + user.email.split("@")[0].replace(/[^a-zA-Z0-9]/g, "").slice(0, 15);
+            setInstanceName(name);
+        }
+    }, [user]);
+
+    // Limpar polling ao desmontar
+    useEffect(() => {
+        return () => {
+            if (pollRef.current) clearInterval(pollRef.current);
+        };
+    }, []);
+
+    const handleConnect = async () => {
+        if (!client || !instanceName.trim()) {
+            toast.error("Nome da instância é obrigatório");
+            return;
+        }
+        setLoading(true);
+        setStatusMsg("Criando instância...");
+
+        try {
+            // 1. Criar instância — Evolution API v2 retorna o QR na criação
+            let qrBase64: string | null = null;
+
+            try {
+                const createRes = await client.createInstance({ instanceName: instanceName.trim(), qrcode: true });
+                // Evolution API v2 pode retornar QR direto no create
+                qrBase64 = createRes?.qrcode?.base64 || createRes?.base64 || null;
+            } catch (createErr: any) {
+                // Se a instância já existe, tentar conectar ela
+                if (createErr.message?.includes("already") || createErr.message?.includes("409")) {
+                    // Instância já existe — ok, vamos tentar buscar QR
+                } else {
+                    throw createErr; // Erro real — propagar
+                }
+            }
+
+            // 2. Se não veio QR no create, buscar via connect
+            if (!qrBase64) {
+                setStatusMsg("Gerando QR Code...");
+                await new Promise(r => setTimeout(r, 2000));
+                const qrData = await client.connectInstance(instanceName.trim());
+                qrBase64 = qrData?.base64 || null;
+            }
+
+            if (qrBase64) {
+                setQrCode(qrBase64);
+                setStep("qr");
+                setStatusMsg("Escaneie o QR Code com seu WhatsApp");
+
+                // 3. Polling para detectar quando conectar
+                pollRef.current = setInterval(async () => {
+                    try {
+                        const state = await client.getConnectionState(instanceName.trim());
+                        const currentState = state?.instance?.state;
+                        if (currentState === "open") {
+                            if (pollRef.current) clearInterval(pollRef.current);
+                            
+                            // Salvar conexão no Supabase
+                            if (user) {
+                                await (supabase as any)
+                                    .from("whatsapp_connections")
+                                    .upsert({
+                                        user_id: user.id,
+                                        instance_name: instanceName.trim(),
+                                        status: "connected",
+                                        updated_at: new Date().toISOString(),
+                                    }, { onConflict: "user_id" });
+                            }
+
+                            setStep("success");
+                            setStatusMsg("WhatsApp conectado com sucesso!");
+                            toast.success("WhatsApp conectado! 🎉");
+                            setTimeout(() => onConnected(), 2000);
+                        }
+                    } catch {
+                        // Continuar polling
+                    }
+                }, 3000);
+            } else {
+                toast.error("Não foi possível gerar o QR Code. Tente novamente.");
+            }
+        } catch (err: any) {
+            toast.error(err.message || "Erro ao conectar");
+            setStatusMsg("Erro ao conectar. Tente novamente.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRefreshQR = async () => {
+        if (!client || !instanceName) return;
+        setLoading(true);
+        try {
+            const qrData = await client.connectInstance(instanceName.trim());
+            if (qrData?.base64) {
+                setQrCode(qrData.base64);
+                toast.success("QR Code atualizado!");
+            }
+        } catch (err: any) {
+            toast.error("Erro ao atualizar QR Code");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="flex flex-col items-center text-center max-w-lg p-8 space-y-6">
+            {step === "naming" && (
+                <>
+                    <div className="w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                        <Smartphone className="w-8 h-8" />
+                    </div>
+                    <h2 className="text-2xl font-bold">Conectar WhatsApp</h2>
+                    <p className="text-muted-foreground text-sm">
+                        Vamos criar uma conexão para o seu WhatsApp. O nome abaixo é gerado automaticamente.
+                    </p>
+                    <div className="w-full space-y-2">
+                        <Input
+                            value={instanceName}
+                            onChange={e => setInstanceName(e.target.value.replace(/[^a-zA-Z0-9-]/g, ""))}
+                            placeholder="nome-da-instancia"
+                            className="text-center"
+                        />
+                    </div>
+                    <Button
+                        onClick={handleConnect}
+                        disabled={loading || !instanceName.trim()}
+                        className="bg-[#00E676] hover:bg-[#00C853] text-black font-semibold w-full"
+                    >
+                        {loading ? (
+                            <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{statusMsg}</>
+                        ) : (
+                            <><QrCode className="w-4 h-4 mr-2" />Gerar QR Code</>
+                        )}
+                    </Button>
+                </>
+            )}
+
+            {step === "qr" && qrCode && (
+                <>
+                    <h2 className="text-xl font-bold">Escaneie o QR Code</h2>
+                    <p className="text-muted-foreground text-sm">
+                        Abra o WhatsApp no celular → Mais opções (⋮) → Dispositivos conectados → Conectar dispositivo
+                    </p>
+                    <div className="bg-white p-4 rounded-2xl shadow-lg">
+                        <img
+                            src={qrCode}
+                            alt="QR Code WhatsApp"
+                            className="w-64 h-64 rounded-lg"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Aguardando conexão do celular...</span>
+                    </div>
+                    <Button
+                        variant="outline"
+                        onClick={handleRefreshQR}
+                        disabled={loading}
+                        size="sm"
+                    >
+                        <RefreshCcw className={cn("w-4 h-4 mr-2", loading && "animate-spin")} />
+                        Atualizar QR Code
+                    </Button>
+                </>
+            )}
+
+            {step === "success" && (
+                <>
+                    <div className="w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                        <Wifi className="w-8 h-8" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-emerald-500">Conectado! 🎉</h2>
+                    <p className="text-muted-foreground">
+                        Seu WhatsApp foi conectado com sucesso. Carregando suas conversas...
+                    </p>
+                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                </>
+            )}
+        </div>
+    );
+}
+
 
 export default function WhatsApp() {
     const {
@@ -35,12 +240,60 @@ export default function WhatsApp() {
         messages,
         isLoadingMessages,
         fetchMessages,
-        sendMessage
+        sendMessage,
+        reconnect,
     } = useWhatsApp();
 
+    const { user } = useAuth();
     const [searchQuery, setSearchQuery] = useState("");
     const [newMessage, setNewMessage] = useState("");
+    const [showConnect, setShowConnect] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    // ── Estado do grupo de notificações ──
+    const [notifGroup, setNotifGroup] = useState<{ jid: string; name: string } | null>(null);
+    const [showGroupPicker, setShowGroupPicker] = useState(false);
+    const [savingGroup, setSavingGroup] = useState(false);
+
+    // Carregar grupo salvo ao montar
+    useEffect(() => {
+        if (!user || !isConnected) return;
+        (async () => {
+            const { data } = await (supabase as any)
+                .from("whatsapp_connections")
+                .select("notification_group_jid, notification_group_name")
+                .eq("user_id", user.id)
+                .maybeSingle();
+            if (data?.notification_group_jid) {
+                setNotifGroup({ jid: data.notification_group_jid, name: data.notification_group_name || "Grupo" });
+            }
+        })();
+    }, [user, isConnected]);
+
+    // Grupos = chats com @g.us
+    const groups = chats.filter(c => c.id?.includes("@g.us"));
+
+    const handleSelectGroup = async (groupJid: string, groupName: string) => {
+        if (!user) return;
+        setSavingGroup(true);
+        try {
+            await (supabase as any)
+                .from("whatsapp_connections")
+                .update({
+                    notification_group_jid: groupJid,
+                    notification_group_name: groupName,
+                    updated_at: new Date().toISOString(),
+                })
+                .eq("user_id", user.id);
+            setNotifGroup({ jid: groupJid, name: groupName });
+            setShowGroupPicker(false);
+            toast.success(`Grupo "${groupName}" selecionado para notificações!`);
+        } catch {
+            toast.error("Erro ao salvar grupo");
+        } finally {
+            setSavingGroup(false);
+        }
+    };
 
     // Auto-scroll to bottom of messages
     useEffect(() => {
@@ -77,18 +330,29 @@ export default function WhatsApp() {
     if (!isConnected) {
         return (
             <div className="flex h-[calc(100vh-100px)] items-center justify-center m-2 border rounded-xl bg-card">
-                <div className="flex flex-col items-center text-center max-w-md p-8">
-                    <div className="w-16 h-16 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mb-6">
-                        <AlertCircle className="w-8 h-8" />
+                {showConnect ? (
+                    <WhatsAppConnectFlow onConnected={() => {
+                        setShowConnect(false);
+                        reconnect();
+                    }} />
+                ) : (
+                    <div className="flex flex-col items-center text-center max-w-md p-8">
+                        <div className="w-16 h-16 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mb-6">
+                            <AlertCircle className="w-8 h-8" />
+                        </div>
+                        <h2 className="text-2xl font-bold mb-2">WhatsApp Desconectado</h2>
+                        <p className="text-muted-foreground mb-6">
+                            Para visualizar suas conversas, você precisa conectar seu aparelho ao sistema.
+                        </p>
+                        <Button
+                            onClick={() => setShowConnect(true)}
+                            className="bg-[#00E676] hover:bg-[#00C853] text-black font-semibold"
+                        >
+                            <Smartphone className="w-4 h-4 mr-2" />
+                            Conectar WhatsApp
+                        </Button>
                     </div>
-                    <h2 className="text-2xl font-bold mb-2">WhatsApp Desconectado</h2>
-                    <p className="text-muted-foreground mb-6">
-                        Para visualizar suas conversas, você precisa conectar seu aparelho ao sistema.
-                    </p>
-                    <Button asChild className="bg-[#00E676] hover:bg-[#00C853] text-black font-semibold">
-                        <Link to="/connections">Conectar WhatsApp</Link>
-                    </Button>
-                </div>
+                )}
             </div>
         );
     }
@@ -99,7 +363,74 @@ export default function WhatsApp() {
     );
 
     return (
-        <div className="flex h-[calc(100vh-100px)] overflow-hidden bg-background border rounded-xl shadow-lg m-2">
+        <div className="flex flex-col h-[calc(100vh-100px)] m-2">
+            {/* ── Banner de seleção de grupo de notificações ── */}
+            <div className="border rounded-t-xl bg-card px-4 py-2 flex items-center justify-between gap-3 border-b-0">
+                <div className="flex items-center gap-2 min-w-0">
+                    <MessageSquare className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <span className="text-sm text-muted-foreground shrink-0">Grupo de notificações:</span>
+                    {notifGroup ? (
+                        <span className="text-sm font-semibold truncate">{notifGroup.name}</span>
+                    ) : (
+                        <span className="text-sm text-yellow-500 italic">Nenhum selecionado</span>
+                    )}
+                </div>
+                <div className="relative">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowGroupPicker(!showGroupPicker)}
+                        className="text-xs h-7"
+                    >
+                        {notifGroup ? "Trocar" : "Selecionar grupo"}
+                    </Button>
+
+                    {/* Dropdown de grupos */}
+                    {showGroupPicker && (
+                        <div className="absolute right-0 top-9 z-50 w-80 max-h-72 overflow-y-auto bg-card border rounded-lg shadow-xl">
+                            <div className="p-2 border-b">
+                                <p className="text-xs font-semibold text-muted-foreground px-2">Seus grupos do WhatsApp</p>
+                            </div>
+                            {isLoadingChats ? (
+                                <div className="p-4 flex justify-center">
+                                    <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                                </div>
+                            ) : groups.length === 0 ? (
+                                <div className="p-4 text-center text-sm text-muted-foreground">
+                                    Nenhum grupo encontrado. Seus grupos aparecerão aqui após carregar as conversas.
+                                </div>
+                            ) : (
+                                groups.map(g => (
+                                    <button
+                                        key={g.id}
+                                        onClick={() => handleSelectGroup(g.id, g.name)}
+                                        disabled={savingGroup}
+                                        className={cn(
+                                            "w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-muted/50 transition-colors",
+                                            notifGroup?.jid === g.id && "bg-primary/10"
+                                        )}
+                                    >
+                                        <Avatar className="h-8 w-8 shrink-0">
+                                            <AvatarImage src={g.avatar} />
+                                            <AvatarFallback className="text-xs">{g.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-medium truncate">{g.name}</p>
+                                            <p className="text-[10px] text-muted-foreground truncate">{g.lastMessage}</p>
+                                        </div>
+                                        {notifGroup?.jid === g.id && (
+                                            <CheckCheck className="w-4 h-4 text-primary shrink-0 ml-auto" />
+                                        )}
+                                    </button>
+                                ))
+                            )}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* ── Layout de chat (existente) ── */}
+            <div className="flex flex-1 overflow-hidden bg-background border rounded-b-xl shadow-lg">
             {/* Sidebar de Conversas */}
             <div className="w-[350px] flex flex-col border-r bg-card/50">
                 {/* Header Sidebar */}
@@ -318,6 +649,7 @@ export default function WhatsApp() {
                     </div>
                 )}
             </div>
+        </div>
         </div>
     );
 }

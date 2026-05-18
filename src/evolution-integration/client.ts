@@ -49,7 +49,9 @@ export class EvolutionClient {
             method: "POST",
             body: JSON.stringify({
                 instanceName: data.instanceName,
-                qrcode: data.qrcode ?? true
+                integration: "WHATSAPP-BAILEYS",
+                qrcode: data.qrcode ?? true,
+                token: data.token || "",
             }),
         });
     }

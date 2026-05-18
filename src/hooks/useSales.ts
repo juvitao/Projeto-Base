@@ -49,6 +49,7 @@ export function useSales() {
             const { data: salesData, error } = await supabase
                 .from("vora_sales")
                 .select("*, client:vora_clients(*)")
+                .eq("user_id", user.id)
                 .order("sale_date", { ascending: false });
             if (error) throw error;
 
@@ -118,41 +119,13 @@ export function useSales() {
     };
 
     const deleteSale = async (id: string) => {
+        if (!user) return;
         try {
-            // 1) Fetch sale items to know what quantities to revert
-            const { data: saleItems } = await supabase
-                .from("vora_sale_items")
-                .select("*")
-                .eq("sale_id", id);
-
-            // 2) Revert stock for each item that has a product_id in inventory
-            if (saleItems && saleItems.length > 0 && user) {
-                const { data: invItems } = await supabase
-                    .from("vora_inventory")
-                    .select("id, master_product_id, quantity")
-                    .eq("user_id", user.id);
-
-                for (const si of saleItems) {
-                    if (!si.product_id) continue;
-                    // Find inventory item by master_product_id matching sale_item.product_id
-                    const inv = invItems?.find(i => i.master_product_id === si.product_id);
-                    if (inv) {
-                        await supabase
-                            .from("vora_inventory")
-                            .update({ quantity: inv.quantity + si.quantity, updated_at: new Date().toISOString() })
-                            .eq("id", inv.id);
-                    }
-                }
-            }
-
-            // 3) Delete associated receivables
-            await supabase.from("vora_receivables").delete().eq("sale_id", id);
-
-            // 4) Delete sale items (cascade may handle this, but explicit is safer)
-            await supabase.from("vora_sale_items").delete().eq("sale_id", id);
-
-            // 5) Delete the sale itself
-            const { error } = await supabase.from("vora_sales").delete().eq("id", id);
+            // Usa RPC atômica — tudo roda em uma transação no banco
+            const { error } = await supabase.rpc("delete_sale_atomic", {
+                p_sale_id: id,
+                p_user_id: user.id,
+            });
             if (error) throw error;
 
             toast({ title: "Venda excluída e estoque revertido!" });

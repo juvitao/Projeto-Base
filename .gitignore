@@ -26,3 +26,9 @@ dist-ssr
 
 .env
 .vercel
+
+# Scripts com credenciais sensíveis — NÃO commitar
+debug_db.js
+update_user.cjs
+temp_roles.sql
+gen-apple-secret.cjs

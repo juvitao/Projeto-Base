@@ -62,12 +62,19 @@ CREATE TABLE IF NOT EXISTS public.vora_payments (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- DESABILITAR RLS (Para permitir acesso direto do projeto novo sem barreiras iniciais)
-ALTER TABLE public.vora_clients DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.vora_products DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.vora_sales DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.vora_sale_items DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.vora_payments DISABLE ROW LEVEL SECURITY;
+-- ⚠️ SCHEMA LEGADO — tabelas vora_products e vora_payments foram substituídas por
+-- master_products (migration 20260301) e vora_receivables (migration 20260227).
+-- Mantido para referência. As migrations subsequentes aplicam o schema atual.
+
+-- ADICIONAR user_id (obrigatório para RLS)
+-- Nota: migrations adicionam user_id nas tabelas que faltavam
+
+-- HABILITAR RLS (obrigatório em TODA tabela — ver Conceitos/RLS na Prática no JEB)
+ALTER TABLE public.vora_clients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.vora_products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.vora_sales ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.vora_sale_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.vora_payments ENABLE ROW LEVEL SECURITY;
 
 -- TRIGGER PARA ATUALIZAR 'updated_at'
 CREATE OR REPLACE FUNCTION public.update_updated_at_column()

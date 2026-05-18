@@ -102,16 +102,22 @@ export function useReceivables() {
     const markAsPaid = async (id: string, paymentDate?: string) => {
         const date = paymentDate || new Date().toISOString().split("T")[0];
         const receivable = receivables.find(r => r.id === id);
-        await updateReceivable(id, {
-            status: "paid",
-            amount_paid: receivable?.amount_due,
-        } as any);
-        // Also persist payment_date separately (not in typed Update)
-        if (receivable) {
-            await supabase
+        if (!receivable) return;
+        try {
+            const { error } = await supabase
                 .from("vora_receivables")
-                .update({ payment_date: date } as any)
+                .update({
+                    status: "paid",
+                    amount_paid: receivable.amount_due,
+                    payment_date: date,
+                    updated_at: new Date().toISOString(),
+                } as any)
                 .eq("id", id);
+            if (error) throw error;
+            toast({ title: "Pagamento confirmado!" });
+            fetchReceivables();
+        } catch (err: any) {
+            toast({ title: "Erro ao confirmar pagamento", description: err.message, variant: "destructive" });
         }
     };
 
