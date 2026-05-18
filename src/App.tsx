@@ -10,6 +10,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { DashboardLayout } from "./components/DashboardLayout";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import Dashboard from "./pages/Dashboard";
+import Clients from "./pages/Clients";
+import Stock from "./pages/Stock";
+import EntradaPorFoto from "./pages/EntradaPorFoto";
+import Financial from "./pages/Financial";
+import Sales from "./pages/Sales";
+import Whatsapp from "./pages/Whatsapp";
+import SettingsPage from "./pages/Settings";
+import Login from "./pages/Login";
+import SignUp from "./pages/SignUp";
+import NotFound from "./pages/NotFound";
+import { AdminRoute } from "./components/admin/AdminRoute";
+import { AdminLayout } from "./components/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminPlans from "./pages/admin/AdminPlans";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -48,23 +64,7 @@ const DeepLinkHandler = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-import Dashboard from "./pages/Dashboard";
-import Clients from "./pages/Clients";
-import Stock from "./pages/Stock";
-import Financial from "./pages/Financial";
-import Sales from "./pages/Sales";
-import Whatsapp from "./pages/Whatsapp";
-import SettingsPage from "./pages/Settings";
-import Login from "./pages/Login";
-import SignUp from "./pages/SignUp";
-import NotFound from "./pages/NotFound";
 
-// Admin
-import { AdminRoute } from "./components/admin/AdminRoute";
-import { AdminLayout } from "./components/admin/AdminLayout";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminUsers from "./pages/admin/AdminUsers";
-import AdminPlans from "./pages/admin/AdminPlans";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -108,6 +108,17 @@ const App = () => (
                     <ProtectedRoute>
                       <DashboardLayout>
                         <Stock />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/stock/entrada-foto"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardLayout>
+                        <EntradaPorFoto />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

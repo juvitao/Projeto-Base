@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
     Package,
     Plus,
@@ -7,6 +8,7 @@ import {
     Trash2,
     AlertCircle,
     Loader2,
+    Camera,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +34,7 @@ import { AddToInventoryDialog } from "@/components/stock/AddToInventoryDialog";
 import { formatBRL } from "@/lib/financial-utils";
 
 const Stock = () => {
+    const navigate = useNavigate();
     const { inventory, isLoading, addToInventory, updateInventory, deleteInventoryItem } = useInventory();
     const { brands } = useBrands();
 
@@ -94,9 +97,18 @@ const Stock = () => {
                     </h1>
                     <p className="text-muted-foreground text-sm">Catálogo de marcas • Estoque pessoal</p>
                 </div>
-                <Button onClick={() => setAddDialogOpen(true)} className="font-bold uppercase text-xs h-11 px-6 gap-2">
-                    <Plus className="w-4 h-4" /> Entrada de Mercadoria
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                    <Button
+                        variant="outline"
+                        onClick={() => navigate("/stock/entrada-foto")}
+                        className="font-bold uppercase text-xs h-11 px-4 gap-2"
+                    >
+                        <Camera className="w-4 h-4" /> Entrada em Massa
+                    </Button>
+                    <Button onClick={() => setAddDialogOpen(true)} className="font-bold uppercase text-xs h-11 px-6 gap-2">
+                        <Plus className="w-4 h-4" /> Entrada de Mercadoria
+                    </Button>
+                </div>
             </div>
 
             {/* KPIs */}
