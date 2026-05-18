@@ -238,10 +238,16 @@ export default function WhatsApp() {
         })();
     }, [user, isConnected]);
 
-    // Apenas grupos (JIDs com @g.us), filtrados pela busca
+    // Apenas grupos (JIDs com @g.us), filtrados pela busca, com o
+    // grupo selecionado SEMPRE no topo (para o user enxergar de imediato).
     const groups = chats
         .filter(c => c.id?.includes("@g.us"))
-        .filter(g => !groupSearch.trim() || g.name.toLowerCase().includes(groupSearch.toLowerCase()));
+        .filter(g => !groupSearch.trim() || g.name.toLowerCase().includes(groupSearch.toLowerCase()))
+        .sort((a, b) => {
+            if (notifGroup?.jid === a.id) return -1;
+            if (notifGroup?.jid === b.id) return 1;
+            return 0;
+        });
 
     const handleSelectGroup = async (groupJid: string, groupName: string) => {
         if (!user) return;
@@ -381,22 +387,38 @@ export default function WhatsApp() {
                         </div>
                     </div>
 
-                    {/* Estado atual */}
-                    <div className="bg-muted/30 border rounded-lg p-4 flex items-center justify-between gap-3">
-                        <div className="min-w-0 flex-1">
-                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">
-                                Grupo selecionado
-                            </p>
+                    {/* Estado atual do grupo selecionado (fixo, sempre visivel) */}
+                    <div className={cn(
+                        "border rounded-lg p-4 flex items-center justify-between gap-3 transition-colors",
+                        notifGroup
+                            ? "bg-emerald-500/10 border-emerald-500/30"
+                            : "bg-yellow-500/5 border-yellow-500/30"
+                    )}>
+                        <div className="min-w-0 flex-1 flex items-center gap-3">
                             {notifGroup ? (
-                                <p className="font-semibold truncate flex items-center gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                                    {notifGroup.name}
-                                </p>
+                                <>
+                                    <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-600 flex items-center justify-center shrink-0">
+                                        <CheckCircle2 className="w-5 h-5" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-[10px] uppercase tracking-wider text-emerald-700 font-bold mb-0.5">
+                                            Grupo ativo
+                                        </p>
+                                        <p className="font-bold text-base truncate">{notifGroup.name}</p>
+                                    </div>
+                                </>
                             ) : (
-                                <p className="text-yellow-500 italic flex items-center gap-2">
-                                    <AlertCircle className="w-4 h-4 shrink-0" />
-                                    Nenhum grupo selecionado
-                                </p>
+                                <>
+                                    <div className="w-10 h-10 rounded-full bg-yellow-500/20 text-yellow-600 flex items-center justify-center shrink-0">
+                                        <AlertCircle className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] uppercase tracking-wider text-yellow-700 font-bold mb-0.5">
+                                            Atencao
+                                        </p>
+                                        <p className="font-semibold italic">Nenhum grupo selecionado</p>
+                                    </div>
+                                </>
                             )}
                         </div>
                         <Button
@@ -450,28 +472,38 @@ export default function WhatsApp() {
                                             : "Nenhum grupo encontrado. Crie um grupo no seu WhatsApp ou clique em Atualizar."}
                                     </div>
                                 ) : (
-                                    groups.map(g => (
-                                        <button
-                                            key={g.id}
-                                            onClick={() => handleSelectGroup(g.id, g.name)}
-                                            disabled={savingGroup}
-                                            className={cn(
-                                                "w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-muted/50 transition-colors border-b last:border-b-0",
-                                                notifGroup?.jid === g.id && "bg-primary/5"
-                                            )}
-                                        >
-                                            <Avatar className="h-9 w-9 shrink-0">
-                                                <AvatarImage src={g.avatar} />
-                                                <AvatarFallback className="text-xs">{g.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                                            </Avatar>
-                                            <div className="min-w-0 flex-1">
-                                                <p className="text-sm font-medium truncate">{g.name}</p>
-                                            </div>
-                                            {notifGroup?.jid === g.id && (
-                                                <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
-                                            )}
-                                        </button>
-                                    ))
+                                    groups.map(g => {
+                                        const isSelected = notifGroup?.jid === g.id;
+                                        return (
+                                            <button
+                                                key={g.id}
+                                                onClick={() => handleSelectGroup(g.id, g.name)}
+                                                disabled={savingGroup}
+                                                className={cn(
+                                                    "w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-b last:border-b-0 relative",
+                                                    isSelected
+                                                        ? "bg-emerald-500/10 hover:bg-emerald-500/15 sticky top-0 z-10 border-l-4 border-l-emerald-500"
+                                                        : "hover:bg-muted/50"
+                                                )}
+                                            >
+                                                <Avatar className={cn("h-9 w-9 shrink-0", isSelected && "ring-2 ring-emerald-500")}>
+                                                    <AvatarImage src={g.avatar} />
+                                                    <AvatarFallback className="text-xs">{g.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                                                </Avatar>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className={cn("text-sm truncate", isSelected ? "font-bold" : "font-medium")}>{g.name}</p>
+                                                    {isSelected && (
+                                                        <p className="text-[10px] uppercase tracking-wider text-emerald-600 font-bold mt-0.5">
+                                                            Selecionado atualmente
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                {isSelected && (
+                                                    <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                                                )}
+                                            </button>
+                                        );
+                                    })
                                 )}
                             </div>
                         </div>
