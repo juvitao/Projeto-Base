@@ -13,6 +13,7 @@ import {
     WifiOff,
     Users,
     CheckCircle2,
+    Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useWhatsApp } from "@/hooks/useWhatsApp";
@@ -213,13 +214,14 @@ function WhatsAppConnectFlow({ onConnected }: { onConnected: () => void }) {
 // Pagina principal - configuracao enxuta (sem chat clone)
 // ─────────────────────────────────────────────────────────────
 export default function WhatsApp() {
-    const { isConnected, isLoadingInstance, chats, isLoadingChats, reconnect } = useWhatsApp();
+    const { isConnected, isLoadingInstance, chats, isLoadingChats, fetchChats, reconnect } = useWhatsApp();
     const { user } = useAuth();
 
     const [showConnect, setShowConnect] = useState(false);
     const [notifGroup, setNotifGroup] = useState<{ jid: string; name: string } | null>(null);
     const [groupPickerOpen, setGroupPickerOpen] = useState(false);
     const [savingGroup, setSavingGroup] = useState(false);
+    const [groupSearch, setGroupSearch] = useState("");
 
     // Carrega grupo de notificacao salvo
     useEffect(() => {
@@ -236,8 +238,10 @@ export default function WhatsApp() {
         })();
     }, [user, isConnected]);
 
-    // Apenas grupos (JIDs com @g.us)
-    const groups = chats.filter(c => c.id?.includes("@g.us"));
+    // Apenas grupos (JIDs com @g.us), filtrados pela busca
+    const groups = chats
+        .filter(c => c.id?.includes("@g.us"))
+        .filter(g => !groupSearch.trim() || g.name.toLowerCase().includes(groupSearch.toLowerCase()));
 
     const handleSelectGroup = async (groupJid: string, groupName: string) => {
         if (!user) return;
@@ -407,10 +411,32 @@ export default function WhatsApp() {
                     {/* Lista de grupos do WhatsApp */}
                     {groupPickerOpen && (
                         <div className="border rounded-lg overflow-hidden">
-                            <div className="bg-muted/30 px-4 py-2 border-b">
+                            <div className="bg-muted/30 px-4 py-2 border-b flex items-center justify-between gap-2">
                                 <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
                                     Seus grupos do WhatsApp
                                 </p>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 px-2 text-[11px]"
+                                    onClick={() => fetchChats()}
+                                    disabled={isLoadingChats}
+                                    title="Buscar grupos novamente na Evolution API"
+                                >
+                                    <RefreshCcw className={cn("w-3 h-3 mr-1", isLoadingChats && "animate-spin")} />
+                                    Atualizar
+                                </Button>
+                            </div>
+                            <div className="p-2 border-b bg-background">
+                                <div className="relative">
+                                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                                    <Input
+                                        value={groupSearch}
+                                        onChange={(e) => setGroupSearch(e.target.value)}
+                                        placeholder="Buscar grupo pelo nome..."
+                                        className="pl-8 h-8 text-sm"
+                                    />
+                                </div>
                             </div>
                             <div className="max-h-72 overflow-y-auto">
                                 {isLoadingChats ? (
@@ -419,7 +445,9 @@ export default function WhatsApp() {
                                     </div>
                                 ) : groups.length === 0 ? (
                                     <div className="p-6 text-center text-sm text-muted-foreground">
-                                        Nenhum grupo encontrado. Crie um grupo no seu WhatsApp e recarregue esta pagina.
+                                        {groupSearch.trim()
+                                            ? `Nenhum grupo encontrado para "${groupSearch}".`
+                                            : "Nenhum grupo encontrado. Crie um grupo no seu WhatsApp ou clique em Atualizar."}
                                     </div>
                                 ) : (
                                     groups.map(g => (
